@@ -2,6 +2,8 @@ import React from 'react';
 import { Search, Heart, User, ShoppingBag, Facebook, Instagram, Twitter } from 'lucide-react';
 
 const TailTradeHomepage = () => {
+
+
   // Color palette
   const colors = {
     primary: '#FF7A59', // Coral/orange color
@@ -13,19 +15,20 @@ const TailTradeHomepage = () => {
 
   // Sample pet data
   const featuredPets = [
-    { id: 1, name: 'Max', type: 'Dog', breed: 'Labrador Retriever', price: 'R 1,200.00', location: 'Johannesburg', image: '/api/placeholder/300/200' },
-    { id: 2, name: 'Bella', type: 'Dog', breed: 'French Bulldog', price: 'R 2,500.00', location: 'Cape Town', image: '/api/placeholder/300/200' },
-    { id: 3, name: 'Luna', type: 'Cat', breed: 'Siamese', price: 'R 850.00', location: 'Durban', image: '/api/placeholder/300/200' },
-    { id: 4, name: 'Rocky', type: 'Dog', breed: 'Golden Retriever', price: 'R 1,700.00', location: 'Pretoria', image: '/api/placeholder/300/200' },
+    { id: 1, name: 'Max', type: 'Dog', breed: 'Labrador Retriever', price: 'R 1,200.00', location: 'Johannesburg', image: './src/assets/placeholder images/list-lab.jpg.jpg' },
+    { id: 2, name: 'Bella', type: 'Dog', breed: 'French Bulldog', price: 'R 2,500.00', location: 'Cape Town', image: './src/assets/placeholder images/list-frech-bull.jpg.jpg' },
+    { id: 3, name: 'Luna', type: 'Cat', breed: 'Siamese', price: 'R 850.00', location: 'Durban', image: './src/assets/placeholder images/list-siamese.jpg.jpg' },
+    { id: 4, name: 'Rocky', type: 'Dog', breed: 'Golden Retriever', price: 'R 1,700.00', location: 'Pretoria', image: './src/assets/placeholder images/list-golden-retriever.jpg.jpg' },
   ];
 
   // Popular breeds (Using the list from the inner, more complete version)
+
   const popularBreeds = [
-    { name: 'Boerboel', icon: '/api/placeholder/60/60', type: 'Dog' },
-    { name: 'Labrador Retriever', icon: '/api/placeholder/60/60', type: 'Dog' },
-    { name: 'Yorkshire Terrier', icon: '/api/placeholder/60/60', type: 'Dog' },
-    { name: 'Maine Coon', icon: '/api/placeholder/60/60', type: 'Cat' },
-    { name: 'Ragdoll', icon: '/api/placeholder/60/60', type: 'Cat' },
+    { name: 'Boerboel', icon: './src/assets/placeholder images/icon-boerboel.jpg.jpg', type: 'Boerboel Dog' },
+    { name: 'Labrador Retriever', icon: './src/assets/placeholder images/icon-golden-retriever.jpg.jpg', type: 'Labrador Dog' },
+    { name: 'Yorkshire Terrier', icon: './src/assets/placeholder images/icon-yorkshire.jpg.jpg', type: 'Yorkshite Dog' },
+    { name: 'Maine Coon', icon: './src/assets/placeholder images/icon-maine-coon.jpg.jpg', type: 'Maine Coon Cat' },
+    { name: 'Ragdoll', icon: './src/assets/placeholder images/icon-ragdol.jpg.jpg', type: 'RagDoll Cat' },
   ];
 
   // Pet card component (defined inside or outside TailTradeHomepage, outside is often preferred for organization)
@@ -49,16 +52,21 @@ const TailTradeHomepage = () => {
   // The main return statement for the TailTradeHomepage component
   return (
     <div className="min-h-screen flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
-      {/* Header */}
+
+
+      {/* HEADER */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto py-4 px-4 flex items-center justify-between">
           <div className="flex items-center">
             <div className="mr-4">
               <div style={{ backgroundColor: colors.primary }} className="flex items-center justify-center w-10 h-10 rounded-full">
-                <span className="text-white font-bold">T</span> {/* Changed from P for TailTrade */}
+
+                {/* LOGO */}
+                <span className="text-white font-bold">T</span> 
               </div>
             </div>
-            <h1 className="text-2xl font-bold">TailTrade</h1>
+            <h1 className="text-2xl font-bold italic 
+                          bg-gradient-to-r from-gray-950 via-gray-800 to-gray-800 bg-[length:250%_100%] bg-right bg-clip-text text-transparent">TailTrade</h1>
           </div>
 
           <nav className="hidden md:flex space-x-6">
@@ -82,24 +90,29 @@ const TailTradeHomepage = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* HERO SECTION */}
+
+
       <section className="relative bg-gray-100 py-16">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center">
           <div className="md:w-1/2 mb-8 md:mb-0">
-            <div className="p-6 rounded-lg" style={{ backgroundColor: colors.primary }}>
-              <h2 className="text-white text-3xl font-bold mb-2">Whether BIG or SMALL</h2>
-              <h2 className="text-white text-3xl font-bold mb-4">WE HAVE ALL</h2>
-              <p className="text-white mb-6">Find your perfect companion today!</p>
+
+             {/* BANNER MESSAGE */}
+            <div className="p-6 rounded-lg bg-gray-150" >
+              <h2 className="text-gray-800 text-6xl font-bold mb-2 italic">Where <span className="text-[#FF7A59]">Tails</span> Find-</h2>
+              <h2 className="text-gray-800 text-5xl font-bold mb-4 italic">New Homes</h2>
+              <p className="text-gray-800 mb-6 text-2xl font-semibold italic">And <span className="text-[#FF7A59]">YOU</span> find life long companions</p>
             </div>
           </div>
           <div className="md:w-1/2">
-            {/* Make sure this placeholder path works in your setup */}
-            <img src="/api/placeholder/600/400" alt="Dog" className="rounded-lg shadow-lg w-full" />
+            {/* HERO IMAGE */}
+            <img  src="./src/assets/placeholder images/hero.jpg.jpg" alt="Dog" className="rounded-lg shadow-lg h-80" />
           </div>
         </div>
       </section>
 
       {/* Search Bar */}
+
       <section className="py-6 bg-white">
         <div className="container mx-auto px-4">
           <div className="bg-white shadow-md rounded-lg p-4">
@@ -133,30 +146,31 @@ const TailTradeHomepage = () => {
         </div>
       </section>
 
-      {/* Navigation Icons */}
+      {/* NAVIGATION ICONS */}
+
       <section className="py-8 bg-white border-t border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100">
-              <div className="w-12 h-12 flex items-center justify-center mb-2">
+            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg  bg-gray-50 hover:bg-gray-100 ">
+              <div className="w-12 h-12 flex items-center justify-center mb-2=">
                  {/* Consider using different icons for different actions */}
                 <ShoppingBag size={28} />
               </div>
               <span className="text-sm font-medium text-center">ADOPT A PET</span>
             </a>
-            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg" style={{ backgroundColor: colors.primary }}>
+            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg  bg-gray-50 hover:bg-gray-100" >
               <div className="w-12 h-12 flex items-center justify-center mb-2">
-                <ShoppingBag size={28} color="white" />
+                <ShoppingBag size={28}  />
               </div>
-              <span className="text-sm font-medium text-white text-center">LIST A PET</span>
+              <span className="text-sm font-medium">LIST A PET</span>
             </a>
-            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100">
+            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100">
               <div className="w-12 h-12 flex items-center justify-center mb-2">
                 <ShoppingBag size={28} />
               </div>
               <span className="text-sm font-medium text-center">PET ESSENTIALS</span>
             </a>
-            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg hover:bg-gray-100">
+            <a href="#" className="flex flex-col items-center justify-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100">
               <div className="w-12 h-12 flex items-center justify-center mb-2">
                 <ShoppingBag size={28} />
               </div>
@@ -167,6 +181,7 @@ const TailTradeHomepage = () => {
       </section>
 
       {/* Popular Breeds */}
+
       <section className="py-12 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold mb-8 text-center">POPULAR <span style={{ color: colors.primary }}>BREEDS</span></h2>
@@ -195,10 +210,10 @@ const TailTradeHomepage = () => {
         </div>
       </section>
 
-      {/* Featured Pets */}
+      {/* LISTED PETS */}
       <section className="py-12" style={{ backgroundColor: colors.primary }}>
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold mb-8 text-center text-white">FEATURED <span className="text-white">PETS</span></h2>
+          <h2 className="text-2xl font-bold mb-8 text-center text-white">LISTED <span className="text-white">PETS</span></h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {featuredPets.map(pet => (
@@ -222,7 +237,7 @@ const TailTradeHomepage = () => {
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold mb-8 text-center">PET <span style={{ color: colors.primary }}>SERVICES</span></h2>
 
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-4 ">
             {['Pet Grooming', 'SPCA', 'Veterinary', 'Pet Day Care', 'Pet Sitter'].map((service, index) => (
               <a key={index} href="#" className="flex flex-col items-center">
                 <div className="w-10 h-10 mb-2 flex items-center justify-center">
@@ -236,7 +251,9 @@ const TailTradeHomepage = () => {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* FOOTER */}
+
+
       <footer style={{ backgroundColor: colors.darkBg }} className="py-8 mt-auto">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
