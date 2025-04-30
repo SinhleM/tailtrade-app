@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
-import { Search, Heart, User, Menu } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Heart, User, Menu, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Header = ({ scrollToSection }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is logged in
+    const user = localStorage.getItem('user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem('user');
+    setCurrentUser(null);
+    setIsMenuOpen(false);
+    // Optionally reload or navigate
+    window.location.reload();
   };
 
   return (
@@ -18,9 +38,11 @@ const Header = ({ scrollToSection }) => {
               <span className="text-white font-bold">T</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold italic bg-gradient-to-r from-gray-950 via-gray-800 to-gray-800 bg-[length:250%_100%] bg-right bg-clip-text text-transparent">
-            TailTrade
-          </h1>
+          <Link to="/">
+            <h1 className="text-2xl font-bold italic bg-gradient-to-r from-gray-950 via-gray-800 to-gray-800 bg-[length:250%_100%] bg-right bg-clip-text text-transparent">
+              TailTrade
+            </h1>
+          </Link>
         </div>
 
         {/* Desktop Navigation Links (Hidden on Mobile) */}
@@ -42,10 +64,19 @@ const Header = ({ scrollToSection }) => {
             <Heart size={22} />
           </a>
 
-          {/* Sign In / Register Button (Hidden on Mobile) */}
-          <a href="#" className="px-4 py-2 rounded hidden md:block" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
-            Sign In / Register
-          </a>
+          {/* Sign In / Register Button or User Info */}
+          {currentUser ? (
+            <div className="hidden md:flex items-center px-4 py-2 rounded" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+              <span className="mr-2">Hi, {currentUser.name.split(' ')[0]}</span>
+              <button onClick={handleLogout} className="flex items-center" title="Logout">
+                <LogOut size={18} />
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="px-4 py-2 rounded hidden md:block" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+              Sign In / Register
+            </Link>
+          )}
 
           {/* Burger Menu Button */}
           <div className="relative">
@@ -64,11 +95,30 @@ const Header = ({ scrollToSection }) => {
                 role="menu"
                 aria-orientation="vertical"
               >
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Sign Up / Register</a>
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); setIsMenuOpen(false); }}>Home</a>
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Purchases</a>
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Wallet</a>
-                <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Settings</a>
+                {currentUser ? (
+                  <>
+                    <div className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
+                      {currentUser.name} ({currentUser.role})
+                    </div>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Purchases</a>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Wallet</a>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Settings</a>
+                    <button 
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200" 
+                      role="menuitem" 
+                      onClick={handleLogout}
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Sign In / Register</Link>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); setIsMenuOpen(false); }}>Home</a>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Browse Pets</a>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>About Us</a>
+                  </>
+                )}
               </div>
             )}
           </div>
