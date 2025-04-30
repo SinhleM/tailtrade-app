@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import TailTradeHomePage from './HomePage.jsx'
-import LoginRegister from './LoginRegister.jsx'
+import TailTradeHomePage from './Components/HomePage.jsx'
+import LoginRegister from './Components/LoginRegister.jsx'
 import './App.css'
 
 function App() {
