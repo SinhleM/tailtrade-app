@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require_once 'config/database.php';
+require_once 'Database.php';
 
 // Only allow POST requests for this endpoint
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
