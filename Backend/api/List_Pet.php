@@ -1,6 +1,6 @@
 <?php
 // Include database connection and CORS headers
-require_once 'Database.php'; // Make sure the path is correct
+require_once 'Database.php'; // <-- Corrected path
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -15,7 +15,8 @@ $data = json_decode(file_get_contents("php://input"));
 // Basic Validation - Check if required fields exist and are not empty
 $required_fields = ['owner_id', 'name', 'type', 'breed', 'age', 'price', 'location', 'description', 'image_url'];
 foreach ($required_fields as $field) {
-    if (!isset($data->$field) || empty(trim(strval($data->$field)))) {
+    // Allow 0 for age and price
+    if (!isset($data->$field) || (empty(trim(strval($data->$field))) && trim(strval($data->$field)) !== '0')) {
         http_response_code(400); // Bad Request
         echo json_encode(array("success" => false, "message" => ucfirst(str_replace('_', ' ', $field)) . " is required"));
         exit();
@@ -57,12 +58,11 @@ $description = htmlspecialchars(strip_tags(trim($data->description)));
 $image_url = filter_var(trim($data->image_url), FILTER_SANITIZE_URL); // Basic URL sanitization
 
 // Validate image URL format (optional but recommended)
-if (!filter_var($image_url, FILTER_VALIDATE_URL)) {
+if (!empty($image_url) && !filter_var($image_url, FILTER_VALIDATE_URL)) { // Check only if not empty
      http_response_code(400);
      echo json_encode(array("success" => false, "message" => "Invalid Image URL format"));
      exit();
 }
-
 
 // SQL query to insert new pet
 // Using CURRENT_TIMESTAMP for created_at as defined in the table schema
@@ -99,8 +99,8 @@ try {
 } catch (PDOException $e) {
     http_response_code(500); // Internal Server Error
     // Log error details internally instead of exposing to the user
-    // error_log("Database error in list_pet.php: " . $e->getMessage());
+    error_log("Database error in list_pet.php: " . $e->getMessage());
     echo json_encode(array("success" => false, "message" => "An internal error occurred. Please try again later."));
-     // Optionally add debug message: "debug_message" => $e->getMessage()
+    // Optionally add debug message: "debug_message" => $e->getMessage()
 }
 ?>

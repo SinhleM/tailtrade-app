@@ -1,6 +1,6 @@
 <?php
 // Include database connection
-require_once 'Database.php';
+require_once 'Database.php'; // <-- Corrected path
 
 // Only allow POST requests for this endpoint
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -71,17 +71,17 @@ $query = "INSERT INTO users (name, email, password, role, created_at) VALUES (:n
 try {
     // Prepare the query
     $stmt = $conn->prepare($query);
-    
+
     // Bind parameters
     $stmt->bindParam(":name", $name);
     $stmt->bindParam(":email", $email);
     $stmt->bindParam(":password", $hashed_password);
     $stmt->bindParam(":role", $role);
-    
+
     // Execute the query
     if ($stmt->execute()) {
         $user_id = $conn->lastInsertId();
-        
+
         // Create user data array (excluding password)
         $user_data = array(
             "id" => $user_id,
@@ -89,7 +89,7 @@ try {
             "email" => $email,
             "role" => $role
         );
-        
+
         // Set response
         http_response_code(201); // Created
         echo json_encode(array(
@@ -103,6 +103,9 @@ try {
     }
 } catch (PDOException $e) {
     http_response_code(500); // Internal Server Error
-    echo json_encode(array("success" => false, "message" => "Database error: " . $e->getMessage()));
+    // Log the error properly in production instead of echoing
+    error_log("Register Error: " . $e->getMessage());
+    echo json_encode(array("success" => false, "message" => "Database error during registration."));
+    // echo json_encode(array("success" => false, "message" => "Database error: " . $e->getMessage())); // For debugging only
 }
 ?>

@@ -1,6 +1,6 @@
 <?php
 // Include database connection and CORS headers
-require_once 'Database.php'; // Make sure the path is correct
+require_once 'Database.php'; // <-- Corrected path
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -51,7 +51,6 @@ if (isset($data->newPassword) && !empty(trim($data->newPassword))) {
         $fetch_stmt = $conn->prepare($fetch_query);
         $fetch_stmt->bindParam(":id", $user_id, PDO::PARAM_INT);
         $fetch_stmt->execute();
-
         $user = $fetch_stmt->fetch(); // Fetch as associative array (default from Database.php)
 
         if (!$user) {
@@ -71,10 +70,9 @@ if (isset($data->newPassword) && !empty(trim($data->newPassword))) {
             echo json_encode(array("success" => false, "message" => "Incorrect current password"));
             exit();
         }
-
     } catch (PDOException $e) {
         http_response_code(500);
-        // error_log("Database error during password fetch in update_profile.php: " . $e->getMessage());
+        error_log("Database error during password fetch in update_profile.php: " . $e->getMessage());
         echo json_encode(array("success" => false, "message" => "An internal error occurred while verifying password."));
         // Optionally add debug message: "debug_message" => $e->getMessage()
         exit();
@@ -118,20 +116,18 @@ try {
              // and no password change was requested, or if the user ID didn't exist (though we checked earlier for password).
              http_response_code(200); // Still OK, just inform no changes made maybe? Or treat as success.
              echo json_encode(array(
-                "success" => true, // Or false depending on desired behaviour
-                "message" => "Profile updated (or no changes needed)"
-            ));
+                 "success" => true, // Or false depending on desired behaviour
+                 "message" => "Profile updated (or no changes needed)"
+             ));
         }
     } else {
         http_response_code(500); // Internal Server Error
         echo json_encode(array("success" => false, "message" => "Unable to update profile"));
     }
-
 } catch (PDOException $e) {
     http_response_code(500); // Internal Server Error
-    // error_log("Database error during profile update in update_profile.php: " . $e->getMessage());
+    error_log("Database error during profile update in update_profile.php: " . $e->getMessage());
     echo json_encode(array("success" => false, "message" => "An internal error occurred during profile update."));
     // Optionally add debug message: "debug_message" => $e->getMessage()
 }
-
 ?>

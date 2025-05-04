@@ -22,6 +22,7 @@ $username = "root";
 $password = ""; // Default XAMPP/MAMP password is often empty or 'root'
 
 // Create connection
+
 $conn = null;
 
 try {
