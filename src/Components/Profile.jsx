@@ -89,7 +89,7 @@ const Profile = () => {
     }
     
     try {
-      const response = await fetch('http://localhost/tailtrade/api/update_profile.php', {
+      const response = await fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/update_profile.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

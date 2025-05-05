@@ -95,7 +95,7 @@ const ListPet = () => {
     };
     
     try {
-      const response = await fetch('http://localhost/tailtrade/api/list_pet.php', {
+      const response = await fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_pet.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
