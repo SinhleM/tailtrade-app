@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Heart, User, Menu, LogOut } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Ensure Link is imported
 
 const Header = ({ scrollToSection }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,8 +24,9 @@ const Header = ({ scrollToSection }) => {
     localStorage.removeItem('user');
     setCurrentUser(null);
     setIsMenuOpen(false);
-    // Optionally reload or navigate
-    window.location.reload();
+    // Optionally reload or navigate to home
+    navigate('/'); // Navigate to home after logout
+    // window.location.reload(); // Or reload if state isn't updating correctly everywhere
   };
 
   return (
@@ -47,9 +48,13 @@ const Header = ({ scrollToSection }) => {
 
         {/* Desktop Navigation Links (Hidden on Mobile) */}
         <nav className="hidden md:flex space-x-6">
-          <a href="#listed-pets" onClick={scrollToSection('listed-pets')} className="text-gray-700 hover:text-gray-900">Browse Pets</a>
-          <a href="#footer" onClick={scrollToSection('footer')} className="text-gray-700 hover:text-gray-900">About</a>
-          <a href="#footer" onClick={scrollToSection('footer')} className="text-gray-700 hover:text-gray-900">Contact</a>
+          <a href="/#listed-pets" onClick={scrollToSection ? scrollToSection('listed-pets') : (e) => { e.preventDefault(); document.getElementById('listed-pets')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">Browse Pets</a>
+          <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">About</a>
+          <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">Contact</a>
+          {/* Potentially add List Pet link here if user is logged in */}
+           {currentUser && (
+            <Link to="/list-pet" className="text-gray-700 hover:text-gray-900">List a Pet</Link>
+           )}
         </nav>
 
         {/* Right Side Icons & Burger Menu */}
@@ -57,10 +62,20 @@ const Header = ({ scrollToSection }) => {
           <a href="#" className="text-gray-700 hover:text-gray-900">
             <Search size={22} />
           </a>
-          <a href="#" className="text-gray-700 hover:text-gray-900 hidden md:block">
-            <User size={22} />
-          </a>
-          <a href="#" className="text-gray-700 hover:text-gray-900 hidden md:block">
+
+          {/* --- Modified User Icon Link --- */}
+          {currentUser ? (
+             <Link to="/profile" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Profile">
+              <User size={22} />
+            </Link>
+           ) : (
+             <Link to="/login" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Login/Register">
+              <User size={22} />
+            </Link>
+           )}
+          {/* --- End Modified User Icon Link --- */}
+
+          <a href="#" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Wishlist">
             <Heart size={22} />
           </a>
 
@@ -91,21 +106,34 @@ const Header = ({ scrollToSection }) => {
             {/* Dropdown Menu */}
             {isMenuOpen && (
               <div
-                className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50"
+                className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200" // Increased width slightly
                 role="menu"
                 aria-orientation="vertical"
               >
                 {currentUser ? (
                   <>
-                    <div className="block px-4 py-2 text-sm text-gray-700 border-b border-gray-200">
-                      {currentUser.name} ({currentUser.role})
+                    {/* --- Modified Burger Menu Logged In --- */}
+                    <div className="block px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                      Signed in as:
+                      <span className="block font-medium text-gray-800">{currentUser.name}</span>
+                      <span className="block text-xs text-gray-600">({currentUser.role})</span>
                     </div>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Purchases</a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Wallet</a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Settings</a>
-                    <button 
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 border-t border-gray-200" 
-                      role="menuitem" 
+                    <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>
+                      My Profile
+                    </Link>
+                     {/* Link to List Pet page */}
+                    <Link to="/list-pet" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>
+                       List a Pet
+                    </Link>
+                    {/* Other user-specific links */}
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>My Listings</a>
+                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>Wishlist</a>
+                    {/* <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>Settings</a> */}
+                     {/* --- End Modified Burger Menu Logged In --- */}
+
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 hover:text-red-800 border-t border-gray-200"
+                      role="menuitem"
                       onClick={handleLogout}
                     >
                       Logout
@@ -113,10 +141,11 @@ const Header = ({ scrollToSection }) => {
                   </>
                 ) : (
                   <>
-                    <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Sign In / Register</Link>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); setIsMenuOpen(false); }}>Home</a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>Browse Pets</a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" onClick={() => setIsMenuOpen(false)}>About Us</a>
+                    <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>Sign In / Register</Link>
+                    <div className="border-t border-gray-100 my-1"></div> {/* Separator */}
+                    <Link to="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={(e) => { setIsMenuOpen(false); /* Let Link handle navigation */ }}>Home</Link>
+                    <a href="/#listed-pets" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={(e) => { e.preventDefault(); document.getElementById('listed-pets')?.scrollIntoView({ behavior: 'smooth' }); setIsMenuOpen(false); }}>Browse Pets</a>
+                    <a href="/#footer" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={(e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); setIsMenuOpen(false); }}>About Us</a>
                   </>
                 )}
               </div>
