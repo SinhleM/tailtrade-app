@@ -5,6 +5,7 @@ import TailTradeHomePage from './Components/HomePage.jsx';
 import LoginRegister from './Components/LoginRegister.jsx';
 import Profile from './Components/Profile.jsx'; 
 import ListPet from './Components/ListPet.jsx';
+import Menu from './Components/Menu.jsx';
 
 import './App.css';
 
@@ -20,6 +21,7 @@ function App() {
         <Route path="/login" element={<LoginRegister />} />
         <Route path="/profile" element={<Profile />} /> 
         <Route path="/list-pet" element={<ListPet />} />
+        <Route path="Menu" element={<Menu/>} />
  
 
       </Routes>
