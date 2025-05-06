@@ -1,7 +1,6 @@
 import React from 'react';
 import Header from './Header';
 import Hero from './Hero';
-import SearchBar from './SearchBar';
 import NavIcons from './NavIcons';
 import PopularBreeds from './PopularBreeds';
 import ListedPets from './ListedPets';
@@ -40,7 +39,7 @@ const TailTradeHomepage = () => {
     <div className="min-h-screen flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
       <Header scrollToSection={scrollToSection} />
       <Hero />
-      <SearchBar />
+      
       <NavIcons scrollToSection={scrollToSection} />
       <PopularBreeds breeds={popularBreeds} />
       <ListedPets pets={featuredPets} />

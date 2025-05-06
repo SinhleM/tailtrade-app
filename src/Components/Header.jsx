@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'; // Ensure Link is imported
 const Header = ({ scrollToSection }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +28,13 @@ const Header = ({ scrollToSection }) => {
     // Optionally reload or navigate to home
     navigate('/'); // Navigate to home after logout
     // window.location.reload(); // Or reload if state isn't updating correctly everywhere
+  };
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter') {
+      console.log('Searching for:', e.target.value);
+      // Add your search logic here
+    }
   };
 
   return (
@@ -58,12 +66,21 @@ const Header = ({ scrollToSection }) => {
         </nav>
 
         {/* Right Side Icons & Burger Menu */}
-        <div className="flex items-center space-x-4">
-          <a href="#" className="text-gray-700 hover:text-gray-900">
-            <Search size={22} />
-          </a>
+        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+          {/* Desktop Search Bar */}
+          <div className="hidden md:flex items-center relative rounded-full bg-gray-100 px-4 py-2 w-64">
+            <Search size={18} className="text-gray-500 mr-2" />
+            <input 
+              type="text" 
+              placeholder="Search products, stores or brands" 
+              className="bg-transparent border-none outline-none text-sm w-full"
+              onFocus={() => setIsSearchFocused(true)}
+              onBlur={() => setIsSearchFocused(false)}
+              onKeyPress={handleSearch}
+            />
+          </div>
 
-          {/* --- Modified User Icon Link --- */}
+          {/* User Icon - only show on desktop if not searching */}
           {currentUser ? (
              <Link to="/profile" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Profile">
               <User size={22} />
@@ -73,7 +90,6 @@ const Header = ({ scrollToSection }) => {
               <User size={22} />
             </Link>
            )}
-          {/* --- End Modified User Icon Link --- */}
 
           <a href="#" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Wishlist">
             <Heart size={22} />
@@ -151,6 +167,21 @@ const Header = ({ scrollToSection }) => {
               </div>
             )}
           </div>
+        </div>
+      </div>
+      
+      {/* Mobile Search Bar - Full Width Below Header */}
+      <div className="md:hidden px-4 pb-3">
+        <div className="flex items-center relative rounded-full bg-gray-100 px-4 py-2">
+          <Search size={18} className="text-gray-500 mr-2" />
+          <input 
+            type="text" 
+            placeholder="Search products, stores or brands" 
+            className="bg-transparent border-none outline-none text-sm w-full"
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            onKeyPress={handleSearch}
+          />
         </div>
       </div>
     </header>
