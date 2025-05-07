@@ -155,7 +155,7 @@ const CreateListing = () => {
           image_url: formData.image_url
         };
       } else {
-        endpoint = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_supply.php';
+        endpoint = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_supplies.php';
         requestData = {
           owner_id: userData.id,
           name: formData.itemName,
