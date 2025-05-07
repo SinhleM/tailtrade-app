@@ -56,12 +56,12 @@ const Header = ({ scrollToSection }) => {
 
         {/* Desktop Navigation Links (Hidden on Mobile) */}
         <nav className="hidden md:flex space-x-6">
-          <a href="/#listed-pets" onClick={scrollToSection ? scrollToSection('listed-pets') : (e) => { e.preventDefault(); document.getElementById('listed-pets')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">Browse Pets</a>
+          <a href="/#listed-pets" onClick={scrollToSection ? scrollToSection('listed-pets') : (e) => { e.preventDefault(); document.getElementById('listed-pets')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">Browse Pets & Items</a>
           <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">About</a>
           <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">Contact</a>
           {/* Potentially add List Pet link here if user is logged in */}
            {currentUser && (
-            <Link to="/list-pet" className="text-gray-700 hover:text-gray-900">List a Pet</Link>
+            <Link to="/list-pet" className="text-gray-700 hover:text-gray-900">Make a listing</Link>
            )}
         </nav>
 

@@ -1,5 +1,4 @@
 import React from 'react'; 
-import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import TailTradeHomePage from './Components/HomePage.jsx';
 import LoginRegister from './Components/LoginRegister.jsx';
@@ -21,8 +20,7 @@ function App() {
         <Route path="/login" element={<LoginRegister />} />
         <Route path="/profile" element={<Profile />} /> 
         <Route path="/list-pet" element={<ListPet />} />
-        <Route path="Menu" element={<Menu/>} />
- 
+        <Route path="/Menu" element={<Menu/>} />
 
       </Routes>
     </Router>

@@ -1,11 +1,7 @@
 <?php
-// --- CORS Headers ---
-// Allow requests from your frontend development server and production domain
 
-//header("Access-Control-Allow-Origin: http://localhost:5173"); // Adjust port if your Vite dev server uses a different one
 header("Access-Control-Allow-Origin: *");
-// Replace 'YOUR_PRODUCTION_DOMAIN' with your actual deployed frontend URL if applicable
-// header("Access-Control-Allow-Origin: YOUR_PRODUCTION_DOMAIN");
+
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
@@ -29,8 +25,7 @@ $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 
 // --- Check Connection ---
 if ($conn->connect_error) {
-    // Don't echo directly in production for security, log errors instead
-    // For development, this helps debugging:
+
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database Connection Error: ' . $conn->connect_error]);
     exit(); // Stop script execution if connection fails
