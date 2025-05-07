@@ -1,357 +1,268 @@
-import React, { useState, useEffect } from 'react';
-import { Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import Header from './Header'; 
+import React, { useState, useEffect, useMemo } from 'react';
+import { Filter, X, ChevronDown, ChevronUp, AlertTriangle, ShoppingBag } from 'lucide-react'; // Added AlertTriangle, ShoppingBag
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'; // Added Link
+import Header from './Header';
+import Footer from './Footer'
 
+// Menu component: Displays listings (pets and supplies) with filtering and sorting capabilities.
 const Menu = () => {
+  // Hooks for managing URL search parameters and navigation.
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Not directly used in this version but good to have if needed.
 
-  // Filter states
-  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || 'all');
-  const [petTypeFilter, setPetTypeFilter] = useState(searchParams.get('petType') || 'all');
-  const [breedFilter, setBreedFilter] = useState(searchParams.get('breed') || 'all');
-  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'newest');
+  // State for mobile filter panel visibility.
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  // State to store all fetched products/listings.
+  const [allListings, setAllListings] = useState([]);
+  // State for loading status.
+  const [loading, setLoading] = useState(true);
+  // State for error messages during data fetching.
+  const [error, setError] = useState(null);
+  // State for the current search query term.
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+
+  // --- Filter States ---
+  // Initialize filter states from URL parameters or use defaults.
+  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || 'all'); // 'all', 'pet', 'supply'
+  const [petTypeFilter, setPetTypeFilter] = useState(searchParams.get('petType') || 'all'); // 'all', 'dog', 'cat' (applies if category is 'pet')
+  const [breedFilter, setBreedFilter] = useState(searchParams.get('breed') || 'all'); // Specific breed (applies if petType is selected)
+  const [supplyConditionFilter, setSupplyConditionFilter] = useState(searchParams.get('condition') || 'all'); // 'all', 'new', 'like-new', etc. (applies if category is 'supply')
+  const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'newest'); // 'newest', 'oldest', 'price-low', 'price-high'
   const [priceRange, setPriceRange] = useState([
     parseInt(searchParams.get('minPrice') || 0),
-    parseInt(searchParams.get('maxPrice') || 10000)
+    parseInt(searchParams.get('maxPrice') || 50000) // Increased max default
   ]);
-  const [location, setLocation] = useState(searchParams.get('location') || 'all');
+  const [locationFilter, setLocationFilter] = useState(searchParams.get('location') || 'all');
 
-  // Collapsible section states for mobile
+  // State for collapsible sections in the filter panel.
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     petFilters: true,
+    supplyFilters: true,
     sort: true,
     price: true,
     location: true
   });
 
-  // Toggle section expansion
+  // Toggles the expansion state of a filter section.
   const toggleSection = (section) => {
-    setExpandedSections({
-      ...expandedSections,
-      [section]: !expandedSections[section]
-    });
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Sample data - would be replaced with API calls
+  // Effect to fetch listings from the backend when the component mounts.
   useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      // Sample pet data
-      const sampleProducts = [
-        {
-          id: 1,
-          name: 'Golden Retriever',
-          category: 'pet',
-          petType: 'dog',
-          breed: 'Golden Retriever',
-          price: 1500,
-          location: 'Cape Town',
-          image: '/placeholder-dog.jpg',
-          date: new Date('2023-01-15')
-        },
-        {
-          id: 2,
-          name: 'Maine Coon',
-          category: 'pet',
-          petType: 'cat',
-          breed: 'Maine Coon',
-          price: 900,
-          location: 'Johannesburg',
-          image: '/placeholder-cat.jpg',
-          date: new Date('2023-02-20')
-        },
-        {
-          id: 3,
-          name: 'Premium Dog Food',
-          category: 'supplies',
-          petType: 'dog',
-          price: 250,
-          location: 'Durban',
-          image: '/placeholder-dogfood.jpg',
-          date: new Date('2023-03-10')
-        },
-        {
-          id: 4,
-          name: 'Cat Tree',
-          category: 'supplies',
-          petType: 'cat',
-          price: 450,
-          location: 'Pretoria',
-          image: '/placeholder-cattree.jpg',
-          date: new Date('2023-03-05')
-        },
-        {
-          id: 5,
-          name: 'Labrador',
-          category: 'pet',
-          petType: 'dog',
-          breed: 'Labrador',
-          price: 1200,
-          location: 'Cape Town',
-          image: '/placeholder-lab.jpg',
-          date: new Date('2023-01-10')
-        },
-        {
-          id: 6,
-          name: 'Siamese Cat',
-          category: 'pet',
-          petType: 'cat',
-          breed: 'Siamese',
-          price: 800,
-          location: 'Johannesburg',
-          image: '/placeholder-siamese.jpg',
-          date: new Date('2023-02-25')
+    setLoading(true);
+    setError(null);
+    fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/Get_All_Listings.php')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      ];
-      setProducts(sampleProducts);
-      setLoading(false);
-    }, 1000);
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Transform fetched data for consistency and usability.
+          const formattedData = data.listings.map(item => ({
+            ...item,
+            // Standardize 'category' based on 'listing_type' from backend.
+            category: item.listing_type, // 'pet' or 'supply'
+            // Ensure 'date' is a Date object for correct sorting.
+            date: new Date(item.created_at),
+            // Ensure price is a number.
+            price: parseFloat(item.price)
+          }));
+          setAllListings(formattedData);
+        } else {
+          setError(data.message || 'Failed to fetch listings.');
+          setAllListings([]);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching listings:', err);
+        setError(`Network error or server issue: ${err.message}. Please ensure the backend is running and accessible.`);
+        setAllListings([]);
+        setLoading(false);
+      });
   }, []);
 
-  // Apply filters to the product list
-  const filteredProducts = products.filter(product => {
-    // Filter by category
-    if (categoryFilter !== 'all' && product.category !== categoryFilter) return false;
 
-    // Filter by pet type if it's relevant
-    if (categoryFilter === 'pet' || (categoryFilter === 'all' && product.category === 'pet')) {
-      if (petTypeFilter !== 'all' && product.petType !== petTypeFilter) return false;
+  // Effect to update the search query state when the URL 'search' parameter changes.
+  useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '');
+  }, [searchParams]);
 
-      // Filter by breed if pet type is selected
-      if (petTypeFilter !== 'all' && breedFilter !== 'all' && product.breed !== breedFilter) return false;
-    }
-
-    // Filter by price range
-    if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
-
-    // Filter by location
-    if (location !== 'all' && product.location !== location) return false;
-
-    return true;
-  });
-
-  // Sort the filtered products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortBy) {
-      case 'newest':
-        return b.date - a.date;
-      case 'oldest':
-        return a.date - b.date;
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      default:
-        return 0;
-    }
-  });
-
-  // Update URL with filter params
+  // Effect to update URL search parameters whenever a filter state changes.
   useEffect(() => {
     const params = new URLSearchParams();
-
+    if (searchQuery) params.set('search', searchQuery);
     if (categoryFilter !== 'all') params.set('category', categoryFilter);
-    if (petTypeFilter !== 'all') params.set('petType', petTypeFilter);
-    if (breedFilter !== 'all') params.set('breed', breedFilter);
-    if (sortBy !== 'newest') params.set('sortBy', sortBy);
-    if (priceRange[0] > 0) params.set('minPrice', priceRange[0]);
-    if (priceRange[1] < 10000) params.set('maxPrice', priceRange[1]);
-    if (location !== 'all') params.set('location', location);
 
-    setSearchParams(params);
-  }, [categoryFilter, petTypeFilter, breedFilter, sortBy, priceRange, location, setSearchParams]);
-
-  // Generate breeds list based on pet type
-  const getBreedsList = () => {
-    const petType = petTypeFilter;
-    if (petType === 'dog') {
-      return ['Golden Retriever', 'Labrador', 'German Shepherd', 'Bulldog', 'Poodle'];
-    } else if (petType === 'cat') {
-      return ['Maine Coon', 'Siamese', 'Persian', 'Bengal', 'Ragdoll'];
+    if (categoryFilter === 'pet' || categoryFilter === 'all') { // Only add pet-specific filters if relevant
+        if (petTypeFilter !== 'all') params.set('petType', petTypeFilter);
+        if (petTypeFilter !== 'all' && breedFilter !== 'all') params.set('breed', breedFilter);
     }
-    return [];
-  };
+    if (categoryFilter === 'supply' || categoryFilter === 'all') { // Only add supply-specific filters if relevant
+        if (supplyConditionFilter !== 'all') params.set('condition', supplyConditionFilter);
+    }
 
-  const handleRangeChange = (e, index) => {
+    if (sortBy !== 'newest') params.set('sortBy', sortBy);
+    if (priceRange[0] > 0) params.set('minPrice', String(priceRange[0]));
+    if (priceRange[1] < 50000) params.set('maxPrice', String(priceRange[1])); // Use the same max as default
+    if (locationFilter !== 'all') params.set('location', locationFilter);
+
+    // Update URL without navigating, preserving history.
+    setSearchParams(params, { replace: true });
+  }, [searchQuery, categoryFilter, petTypeFilter, breedFilter, supplyConditionFilter, sortBy, priceRange, locationFilter, setSearchParams]);
+
+
+  // Memoized calculation for filtered and sorted products.
+  // This recalculates only when its dependencies change.
+  const processedListings = useMemo(() => {
+    let filtered = allListings.filter(listing => {
+      // Search query filter (checks name, description, breed, type)
+      if (searchQuery) {
+        const lowerSearchQuery = searchQuery.toLowerCase();
+        const inName = listing.name && listing.name.toLowerCase().includes(lowerSearchQuery);
+        const inDescription = listing.description && listing.description.toLowerCase().includes(lowerSearchQuery);
+        const inBreed = listing.breed && listing.breed.toLowerCase().includes(lowerSearchQuery);
+        const inType = listing.type && listing.type.toLowerCase().includes(lowerSearchQuery); // For pet type 'dog'/'cat'
+        const inListingType = listing.listing_type && listing.listing_type.toLowerCase().includes(lowerSearchQuery); // 'pet' or 'supply'
+
+        if (!(inName || inDescription || inBreed || inType || inListingType)) return false;
+      }
+
+      // Category filter
+      if (categoryFilter !== 'all' && listing.category !== categoryFilter) return false;
+
+      // Pet-specific filters (only if category is 'pet' or 'all')
+      if (listing.category === 'pet') {
+        if (petTypeFilter !== 'all' && listing.type !== petTypeFilter) return false;
+        if (petTypeFilter !== 'all' && breedFilter !== 'all' && listing.breed !== breedFilter) return false;
+      }
+
+      // Supply-specific filters (only if category is 'supply' or 'all')
+      if (listing.category === 'supply') {
+         if (supplyConditionFilter !== 'all' && listing.condition !== supplyConditionFilter) return false;
+      }
+
+      // Price range filter
+      if (listing.price < priceRange[0] || listing.price > priceRange[1]) return false;
+
+      // Location filter
+      if (locationFilter !== 'all' && listing.location !== locationFilter) return false;
+
+      return true;
+    });
+
+    // Sorting
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest': return b.date - a.date;
+        case 'oldest': return a.date - b.date;
+        case 'price-low': return a.price - b.price;
+        case 'price-high': return b.price - a.price;
+        default: return 0;
+      }
+    });
+  }, [allListings, searchQuery, categoryFilter, petTypeFilter, breedFilter, supplyConditionFilter, sortBy, priceRange, locationFilter]);
+
+
+  // --- Dynamic options for filters ---
+  const locations = useMemo(() => ['all', ...new Set(allListings.map(p => p.location).filter(Boolean))], [allListings]);
+  const breeds = useMemo(() => {
+    if (petTypeFilter === 'all') return ['all']; // Show only 'all' if no specific pet type
+    return ['all', ...new Set(allListings.filter(p => p.category === 'pet' && p.type === petTypeFilter).map(p => p.breed).filter(Boolean))];
+  }, [allListings, petTypeFilter]);
+  const conditions = useMemo(() => ['all', 'new', 'like-new', 'good', 'fair', 'used'], []);
+
+
+  // Handlers for filter changes
+  const handlePriceRangeChange = (e, index) => {
+    const value = parseInt(e.target.value, 10);
     const newRange = [...priceRange];
-    newRange[index] = parseInt(e.target.value);
+    newRange[index] = isNaN(value) ? (index === 0 ? 0 : 50000) : value; // Ensure valid numbers
+
+    // Prevent minPrice from exceeding maxPrice and vice-versa
+    if (index === 0 && newRange[0] > newRange[1]) newRange[0] = newRange[1];
+    if (index === 1 && newRange[1] < newRange[0]) newRange[1] = newRange[0];
+
     setPriceRange(newRange);
   };
 
-  // Toggle mobile filter panel
-  const toggleMobileFilter = () => {
-    setIsMobileFilterOpen(!isMobileFilterOpen);
-  };
+  // Toggle mobile filter panel.
+  const toggleMobileFilter = () => setIsMobileFilterOpen(!isMobileFilterOpen);
 
+  // --- Render Logic ---
   return (
     <>
-    <Header/>
-      <div className="container mx-auto px-4 py-8">
-        
-          
-          
-        
-
-        {/* Mobile Filter Button */}
-        <div className="md:hidden mb-4">
-          <button
-            onClick={toggleMobileFilter}
-            className="flex items-center justify-center w-full py-2 px-4 rounded"
-            style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-          >
-            <Filter size={18} className="mr-2" />
-            Filters ({filteredProducts.length} results)
-          </button>
+      <Header /> {/* Include the Header component */}
+      <div className="container mx-auto px-4 py-8 font-inter">
+        {/* Page Title and Mobile Filter Button */}
+        <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold text-gray-800">Browse Listings</h1>
+            <div className="md:hidden">
+                <button
+                    onClick={toggleMobileFilter}
+                    className="flex items-center justify-center py-2 px-4 rounded-md text-white shadow-md hover:shadow-lg transition-shadow"
+                    style={{ backgroundColor: 'var(--color-primary)' }}
+                >
+                    <Filter size={18} className="mr-2" />
+                    Filters ({processedListings.length})
+                </button>
+            </div>
         </div>
 
-        <div className="flex flex-col md:flex-row">
-          {/* Filter Panel - Hidden on mobile until filter button is clicked */}
-          <div className={`${isMobileFilterOpen ? 'fixed inset-0 z-50 overflow-auto bg-white p-4' : 'hidden'} md:block md:relative md:w-64 md:mr-6 md:z-auto`}>
-            {/* Mobile Close Button */}
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Filter Panel */}
+          <aside className={`${isMobileFilterOpen ? 'fixed inset-0 z-40 overflow-y-auto bg-white p-6 w-full' : 'hidden'} md:block md:relative md:w-72 md:z-auto md:p-0 md:bg-transparent`}>
             {isMobileFilterOpen && (
-              <div className="flex justify-between items-center md:hidden mb-4 pb-2 border-b">
-                <h3 className="text-xl font-bold">Filters</h3>
-                <button
-                  onClick={toggleMobileFilter}
-                  className="rounded-full p-1 text-gray-600 hover:bg-gray-100"
-                >
-                  <X size={24} />
+              <div className="flex justify-between items-center md:hidden mb-6 pb-4 border-b border-gray-200">
+                <h3 className="text-2xl font-semibold text-gray-700">Filters</h3>
+                <button onClick={toggleMobileFilter} className="p-2 text-gray-600 hover:text-gray-800 rounded-full hover:bg-gray-100 transition-colors">
+                  <X size={28} />
                 </button>
               </div>
             )}
 
-            {/* Category Filter Section */}
+            {/* Category Filter */}
             <div className="mb-6">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-2"
-                onClick={() => toggleSection('category')}
-              >
-                <h3 className="text-lg font-semibold">Category</h3>
-                {expandedSections.category ?
-                  <ChevronUp size={16} className="text-gray-600" /> :
-                  <ChevronDown size={16} className="text-gray-600" />
-                }
-              </div>
-
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('category')}>
+                Category {expandedSections.category ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </h3>
               {expandedSections.category && (
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="category"
-                      value="all"
-                      checked={categoryFilter === 'all'}
-                      onChange={() => setCategoryFilter('all')}
-                      className="form-radio text-gray-800"
-                    />
-                    <span>All</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="category"
-                      value="pet"
-                      checked={categoryFilter === 'pet'}
-                      onChange={() => setCategoryFilter('pet')}
-                      className="form-radio text-gray-800"
-                    />
-                    <span>Pets</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="category"
-                      value="supplies"
-                      checked={categoryFilter === 'supplies'}
-                      onChange={() => setCategoryFilter('supplies')}
-                      className="form-radio text-gray-800"
-                    />
-                    <span>Pet Supplies/Items</span>
-                  </label>
+                <div className="space-y-2 pl-2">
+                  {['all', 'pet', 'supply'].map(cat => (
+                    <label key={cat} className="flex items-center space-x-2 text-gray-600 hover:text-gray-800 cursor-pointer">
+                      <input type="radio" name="category" value={cat} checked={categoryFilter === cat} onChange={(e) => {setCategoryFilter(e.target.value); setPetTypeFilter('all'); setBreedFilter('all'); setSupplyConditionFilter('all');}} className="form-radio h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300"/>
+                      <span>{cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+                    </label>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Pet Filters - Only show when Pets category is selected */}
+            {/* Pet Specific Filters */}
             {(categoryFilter === 'pet' || categoryFilter === 'all') && (
               <div className="mb-6">
-                <div
-                  className="flex justify-between items-center cursor-pointer mb-2"
-                  onClick={() => toggleSection('petFilters')}
-                >
-                  <h3 className="text-lg font-semibold">Pet Type</h3>
-                  {expandedSections.petFilters ?
-                    <ChevronUp size={16} className="text-gray-600" /> :
-                    <ChevronDown size={16} className="text-gray-600" />
-                  }
-                </div>
-
+                <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('petFilters')}>
+                  Pet Filters {expandedSections.petFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </h3>
                 {expandedSections.petFilters && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="petType"
-                          value="all"
-                          checked={petTypeFilter === 'all'}
-                          onChange={() => {
-                            setPetTypeFilter('all');
-                            setBreedFilter('all');
-                          }}
-                          className="form-radio text-gray-800"
-                        />
-                        <span>All Pets</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="petType"
-                          value="dog"
-                          checked={petTypeFilter === 'dog'}
-                          onChange={() => {
-                            setPetTypeFilter('dog');
-                            setBreedFilter('all');
-                          }}
-                          className="form-radio text-gray-800"
-                        />
-                        <span>Dogs</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="petType"
-                          value="cat"
-                          checked={petTypeFilter === 'cat'}
-                          onChange={() => {
-                            setPetTypeFilter('cat');
-                            setBreedFilter('all');
-                          }}
-                          className="form-radio text-gray-800"
-                        />
-                        <span>Cats</span>
-                      </label>
+                  <div className="space-y-4 pl-2">
+                    <div>
+                      <label htmlFor="petTypeFilter" className="block text-sm font-medium text-gray-500 mb-1">Pet Type</label>
+                      <select id="petTypeFilter" value={petTypeFilter} onChange={(e) => {setPetTypeFilter(e.target.value); setBreedFilter('all');}} className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                        {['all', 'dog', 'cat'].map(type => <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>)}
+                      </select>
                     </div>
-
-                    {/* Breed Filter - Only show when dog or cat is selected */}
-                    {petTypeFilter !== 'all' && (
-                      <div className="mt-4">
-                        <h4 className="text-md font-medium mb-2">Breed</h4>
-                        <select
-                          value={breedFilter}
-                          onChange={(e) => setBreedFilter(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded text-sm"
-                        >
-                          <option value="all">All Breeds</option>
-                          {getBreedsList().map(breed => (
-                            <option key={breed} value={breed}>{breed}</option>
-                          ))}
+                    {petTypeFilter !== 'all' && breeds.length > 1 && (
+                      <div>
+                        <label htmlFor="breedFilter" className="block text-sm font-medium text-gray-500 mb-1">Breed</label>
+                        <select id="breedFilter" value={breedFilter} onChange={(e) => setBreedFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                          {breeds.map(breed => <option key={breed} value={breed}>{breed.charAt(0).toUpperCase() + breed.slice(1)}</option>)}
                         </select>
                       </div>
                     )}
@@ -360,74 +271,62 @@ const Menu = () => {
               </div>
             )}
 
+            {/* Supply Specific Filters */}
+            {(categoryFilter === 'supply' || categoryFilter === 'all') && (
+                <div className="mb-6">
+                    <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('supplyFilters')}>
+                        Supply Filters {expandedSections.supplyFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </h3>
+                    {expandedSections.supplyFilters && (
+                        <div className="space-y-4 pl-2">
+                            <div>
+                                <label htmlFor="supplyConditionFilter" className="block text-sm font-medium text-gray-500 mb-1">Condition</label>
+                                <select id="supplyConditionFilter" value={supplyConditionFilter} onChange={(e) => setSupplyConditionFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                                    {conditions.map(cond => <option key={cond} value={cond}>{cond.charAt(0).toUpperCase() + cond.slice(1).replace('-', ' ')}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+
+
             {/* Sort By Filter */}
             <div className="mb-6">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-2"
-                onClick={() => toggleSection('sort')}
-              >
-                <h3 className="text-lg font-semibold">Sort By</h3>
-                {expandedSections.sort ?
-                  <ChevronUp size={16} className="text-gray-600" /> :
-                  <ChevronDown size={16} className="text-gray-600" />
-                }
-              </div>
-
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('sort')}>
+                Sort By {expandedSections.sort ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </h3>
               {expandedSections.sort && (
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                </select>
+                <div className="pl-2">
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                  </select>
+                </div>
               )}
             </div>
 
             {/* Price Range Filter */}
             <div className="mb-6">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-2"
-                onClick={() => toggleSection('price')}
-              >
-                <h3 className="text-lg font-semibold">Price Range</h3>
-                {expandedSections.price ?
-                  <ChevronUp size={16} className="text-gray-600" /> :
-                  <ChevronDown size={16} className="text-gray-600" />
-                }
-              </div>
-
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('price')}>
+                Price Range {expandedSections.price ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </h3>
               {expandedSections.price && (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">R {priceRange[0]}</span>
-                    <span className="text-sm text-gray-600">R {priceRange[1]}</span>
+                <div className="space-y-3 pl-2">
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>R {priceRange[0]}</span>
+                    <span>R {priceRange[1]}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-sm text-gray-600 block">Min</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={priceRange[1]}
-                        value={priceRange[0]}
-                        onChange={(e) => handleRangeChange(e, 0)}
-                        className="w-full p-2 border border-gray-300 rounded text-sm"
-                      />
+                      <label htmlFor="minPrice" className="block text-xs font-medium text-gray-500 mb-1">Min</label>
+                      <input id="minPrice" type="number" min="0" max={priceRange[1]} value={priceRange[0]} onChange={(e) => handlePriceRangeChange(e, 0)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"/>
                     </div>
                     <div>
-                      <label className="text-sm text-gray-600 block">Max</label>
-                      <input
-                        type="number"
-                        min={priceRange[0]}
-                        max="10000"
-                        value={priceRange[1]}
-                        onChange={(e) => handleRangeChange(e, 1)}
-                        className="w-full p-2 border border-gray-300 rounded text-sm"
-                      />
+                      <label htmlFor="maxPrice" className="block text-xs font-medium text-gray-500 mb-1">Max</label>
+                      <input id="maxPrice" type="number" min={priceRange[0]} max="50000" value={priceRange[1]} onChange={(e) => handlePriceRangeChange(e, 1)} className="w-full p-2 border border-gray-300 rounded-md text-sm focus:ring-orange-500 focus:border-orange-500"/>
                     </div>
                   </div>
                 </div>
@@ -436,123 +335,126 @@ const Menu = () => {
 
             {/* Location Filter */}
             <div className="mb-6">
-              <div
-                className="flex justify-between items-center cursor-pointer mb-2"
-                onClick={() => toggleSection('location')}
-              >
-                <h3 className="text-lg font-semibold">Location</h3>
-                {expandedSections.location ?
-                  <ChevronUp size={16} className="text-gray-600" /> :
-                  <ChevronDown size={16} className="text-gray-600" />
-                }
-              </div>
-
-              {expandedSections.location && (
-                <select
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded text-sm"
-                >
-                  <option value="all">All Locations</option>
-                  <option value="Cape Town">Cape Town</option>
-                  <option value="Johannesburg">Johannesburg</option>
-                  <option value="Durban">Durban</option>
-                  <option value="Pretoria">Pretoria</option>
-                </select>
+              <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('location')}>
+                Location {expandedSections.location ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </h3>
+              {expandedSections.location && locations.length > 0 && (
+                <div className="pl-2">
+                  <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                    {locations.map(loc => <option key={loc} value={loc}>{loc === 'all' ? 'All Locations' : loc}</option>)}
+                  </select>
+                </div>
               )}
             </div>
 
-            {/* Apply Filters Button - Mobile Only */}
             {isMobileFilterOpen && (
-              <button
-                onClick={toggleMobileFilter}
-                className="w-full py-2 px-4 rounded mt-4 md:hidden"
-                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-              >
-                Apply Filters
+              <button onClick={toggleMobileFilter} className="w-full mt-6 py-3 px-4 rounded-md text-white font-semibold shadow-md hover:shadow-lg transition-shadow" style={{ backgroundColor: 'var(--color-primary)' }}>
+                Apply Filters & View ({processedListings.length})
               </button>
             )}
-          </div>
+          </aside>
 
-          {/* Product Grid */}
-          <div className="w-full">
-            {loading ? (
+          {/* Listings Grid */}
+          <main className="w-full">
+            {loading && (
               <div className="flex justify-center items-center h-64">
-                <div className="text-xl text-gray-500">Loading products...</div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+                <p className="ml-3 text-lg text-gray-600">Loading listings...</p>
               </div>
-            ) : (
-              <>
-                <div className="mb-4 text-gray-600">
-                  {filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'} found
+            )}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg shadow-md flex items-center">
+                <AlertTriangle size={24} className="mr-3 text-red-500" />
+                <div>
+                    <p className="font-semibold">Error loading listings</p>
+                    <p className="text-sm">{error}</p>
                 </div>
-
-                {filteredProducts.length === 0 ? (
-                  <div className="flex justify-center items-center h-64 border border-gray-200 rounded-lg">
-                    <div className="text-center p-8">
-                      <h3 className="text-xl font-medium text-gray-700 mb-2">No products found</h3>
-                      <p className="text-gray-500">Try adjusting your filters to find what you're looking for</p>
-                    </div>
+              </div>
+            )}
+            {!loading && !error && (
+              <>
+                <div className="mb-4 text-sm text-gray-600">
+                  Showing {processedListings.length} {processedListings.length === 1 ? 'result' : 'results'}.
+                  {searchQuery && <span> Searched for: "{searchQuery}"</span>}
+                </div>
+                {processedListings.length === 0 ? (
+                  <div className="flex flex-col justify-center items-center h-80 border border-gray-200 rounded-lg bg-gray-50 p-8 text-center shadow">
+                    <ShoppingBag size={48} className="text-gray-400 mb-4" />
+                    <h3 className="text-2xl font-semibold text-gray-700 mb-2">No Listings Found</h3>
+                    <p className="text-gray-500">Try adjusting your search or filters to find what you're looking for.</p>
+                    <button
+                        onClick={() => {
+                            setSearchQuery('');
+                            setCategoryFilter('all');
+                            setPetTypeFilter('all');
+                            setBreedFilter('all');
+                            setSupplyConditionFilter('all');
+                            setPriceRange([0, 50000]);
+                            setLocationFilter('all');
+                            setSortBy('newest');
+                        }}
+                        className="mt-6 px-6 py-2 rounded-md text-white font-medium shadow-md hover:shadow-lg transition-all"
+                        style={{ backgroundColor: 'var(--color-primary)' }}
+                    >
+                        Clear All Filters
+                    </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {sortedProducts.map(product => (
-                      <div
-                        key={product.id}
-                        className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        <div className="h-48 bg-gray-200 relative">
-                          {/* This would be an image in the real implementation */}
-                          <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                            {product.image ? (
-                              <img
-                                src="/api/placeholder/400/320"
-                                alt={product.name}
-                                className="object-cover w-full h-full"
-                              />
-                            ) : (
-                              "Product Image"
-                            )}
-                          </div>
-                          <div className="absolute top-2 left-2">
-                            <span className="px-2 py-1 text-xs rounded bg-white shadow-sm">
-                              {product.category === 'pet' ? 'Pet' : 'Supplies'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="p-4">
-                          <h3 className="font-medium text-lg mb-1">{product.name}</h3>
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-600">{product.location}</span>
-                            {product.category === 'pet' && (
-                              <span className="text-sm bg-gray-100 px-2 py-1 rounded">
-                                {product.petType === 'dog' ? 'Dog' : 'Cat'} {product.breed}
-                              </span>
-                            )}
-                          </div>
-                          <div className="pt-2 border-t border-gray-100 mt-2">
-                            <div className="flex justify-between items-center">
-                              <span className="font-bold text-lg">R {product.price.toLocaleString()}</span>
-                              <button
-                                className="px-3 py-1 rounded text-sm"
-                                style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-                              >
-                                View
-                              </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {processedListings.map(listing => (
+                      <div key={listing.id + listing.listing_type} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ease-in-out flex flex-col bg-white transform hover:scale-[1.03]">
+                        <Link to={`/listing/${listing.listing_type}/${listing.id}`} className="block"> {/* Placeholder Link */}
+                            <div className="h-56 bg-gray-100 relative overflow-hidden">
+                            <img
+                                src={listing.image_url || `https://placehold.co/400x320/E2E8F0/AAAAAA?text=${listing.name.split(' ')[0]}`}
+                                alt={listing.name}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/400x320/E2E8F0/AAAAAA?text=Image+Not+Found`; }}
+                            />
+                            <div className="absolute top-2 left-2">
+                                <span className="px-2.5 py-1 text-xs font-semibold rounded-full shadow-md capitalize"
+                                      style={{
+                                        backgroundColor: listing.category === 'pet' ? 'rgba(255, 122, 89, 0.8)' : 'rgba(59, 130, 246, 0.8)', /* --color-primary or a blue for supplies */
+                                        color: 'white',
+                                        backdropFilter: 'blur(2px)'
+                                      }}>
+                                {listing.category}
+                                </span>
                             </div>
-                          </div>
-                        </div>
+                            </div>
+                            <div className="p-4 flex flex-col flex-grow">
+                            <h3 className="font-semibold text-lg mb-1 text-gray-800 truncate" title={listing.name}>{listing.name}</h3>
+                            <p className="text-sm text-gray-500 mb-1 capitalize">
+                                {listing.location}
+                            </p>
+                            {listing.category === 'pet' && listing.breed && (
+                                <p className="text-xs text-gray-500 mb-2 capitalize bg-gray-100 px-2 py-0.5 rounded-full self-start">{listing.breed}</p>
+                            )}
+                             {listing.category === 'supply' && listing.condition && (
+                                <p className="text-xs text-gray-500 mb-2 capitalize bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full self-start">{listing.condition.replace('-', ' ')}</p>
+                            )}
+                            <div className="mt-auto pt-2">
+                                <div className="flex justify-between items-center">
+                                <span className="font-bold text-xl text-gray-800">R {listing.price.toLocaleString()}</span>
+                                {/* Placeholder for a "View Details" button if not using the whole card as a link */}
+                                {/* <button className="px-4 py-1.5 rounded-md text-sm font-medium text-white shadow hover:shadow-md transition-shadow" style={{ backgroundColor: 'var(--color-primary)'}}>
+                                    View
+                                </button> */}
+                                </div>
+                            </div>
+                            </div>
+                        </Link>
                       </div>
                     ))}
                   </div>
                 )}
               </>
             )}
-          </div>
+          </main>
         </div>
       </div>
-
-        
-      </>
+      
+    </>
   );
 };
 
