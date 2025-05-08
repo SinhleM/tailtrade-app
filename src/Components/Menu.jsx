@@ -8,7 +8,7 @@ import Footer from './Footer'
 const Menu = () => {
   // Hooks for managing URL search parameters and navigation.
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate(); // Not directly used in this version but good to have if needed.
+  const navigate = useNavigate(); 
 
   // State for mobile filter panel visibility.
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -193,6 +193,11 @@ const Menu = () => {
 
   // Toggle mobile filter panel.
   const toggleMobileFilter = () => setIsMobileFilterOpen(!isMobileFilterOpen);
+  
+  // Handler for navigating to listing detail
+  const handleListingClick = (listing) => {
+    navigate(`/listing/${listing.listing_type}/${listing.id}`);
+  };
 
   // --- Render Logic ---
   return (
@@ -400,50 +405,53 @@ const Menu = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                     {processedListings.map(listing => (
-                      <div key={listing.id + listing.listing_type} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ease-in-out flex flex-col bg-white transform hover:scale-[1.03]">
-                        <Link to={`/listing/${listing.listing_type}/${listing.id}`} className="block"> {/* Placeholder Link */}
-                            <div className="h-56 bg-gray-100 relative overflow-hidden">
-                            <img
-                                src={listing.image_url || `https://placehold.co/400x320/E2E8F0/AAAAAA?text=${listing.name.split(' ')[0]}`}
-                                alt={listing.name}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/400x320/E2E8F0/AAAAAA?text=Image+Not+Found`; }}
-                            />
-                            <div className="absolute top-2 left-2">
-                                <span className="px-2.5 py-1 text-xs font-semibold rounded-full shadow-md capitalize"
-                                      style={{
-                                        backgroundColor: listing.category === 'pet' ? 'rgba(255, 122, 89, 0.8)' : 'rgba(59, 130, 246, 0.8)', /* --color-primary or a blue for supplies */
-                                        color: 'white',
-                                        backdropFilter: 'blur(2px)'
-                                      }}>
-                                {listing.category}
-                                </span>
+                      <div 
+                        key={listing.id + listing.listing_type} 
+                        className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ease-in-out flex flex-col bg-white transform hover:scale-[1.03] cursor-pointer"
+                        onClick={() => navigate(`/listing/${listing.listing_type}/${listing.id}`)}
+                      >
+                        <div className="h-40 sm:h-56 bg-gray-100 relative overflow-hidden">
+                          <img
+                            src={listing.image_url || `https://placehold.co/400x320/E2E8F0/AAAAAA?text=${listing.name.split(' ')[0]}`}
+                            alt={listing.name}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            onError={(e) => { e.target.onerror = null; e.target.src=`https://placehold.co/400x320/E2E8F0/AAAAAA?text=Image+Not+Found`; }}
+                          />
+                          <div className="absolute top-2 left-2">
+                            <span className="px-2.5 py-1 text-xs font-semibold rounded-full shadow-md capitalize"
+                                  style={{
+                                    backgroundColor: listing.category === 'pet' ? 'rgba(255, 122, 89, 0.8)' : 'rgba(59, 130, 246, 0.8)', /* --color-primary or a blue for supplies */
+                                    color: 'white',
+                                    backdropFilter: 'blur(2px)'
+                                  }}>
+                            {listing.category}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="p-3 sm:p-4 flex flex-col flex-grow">
+                          <h3 className="font-semibold text-base sm:text-lg mb-1 text-gray-800 truncate" title={listing.name}>{listing.name}</h3>
+                          <p className="text-xs sm:text-sm text-gray-500 mb-1 capitalize">
+                            {listing.location}
+                          </p>
+                          {listing.category === 'pet' && listing.breed && (
+                            <p className="text-xs text-gray-500 mb-2 capitalize bg-gray-100 px-2 py-0.5 rounded-full self-start">{listing.breed}</p>
+                          )}
+                          {listing.category === 'supply' && listing.condition && (
+                            <p className="text-xs text-gray-500 mb-2 capitalize bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full self-start">{listing.condition.replace('-', ' ')}</p>
+                          )}
+                          <div className="mt-auto pt-2">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-base sm:text-xl text-gray-800">R {listing.price.toLocaleString()}</span>
+                              <button 
+                                className="px-2 py-1 sm:px-4 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium text-white shadow hover:shadow-md transition-shadow" 
+                                style={{ backgroundColor: 'var(--color-primary)'}}>
+                                View
+                              </button>
                             </div>
-                            </div>
-                            <div className="p-4 flex flex-col flex-grow">
-                            <h3 className="font-semibold text-lg mb-1 text-gray-800 truncate" title={listing.name}>{listing.name}</h3>
-                            <p className="text-sm text-gray-500 mb-1 capitalize">
-                                {listing.location}
-                            </p>
-                            {listing.category === 'pet' && listing.breed && (
-                                <p className="text-xs text-gray-500 mb-2 capitalize bg-gray-100 px-2 py-0.5 rounded-full self-start">{listing.breed}</p>
-                            )}
-                             {listing.category === 'supply' && listing.condition && (
-                                <p className="text-xs text-gray-500 mb-2 capitalize bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full self-start">{listing.condition.replace('-', ' ')}</p>
-                            )}
-                            <div className="mt-auto pt-2">
-                                <div className="flex justify-between items-center">
-                                <span className="font-bold text-xl text-gray-800">R {listing.price.toLocaleString()}</span>
-                                {/* Placeholder for a "View Details" button if not using the whole card as a link */}
-                                {/* <button className="px-4 py-1.5 rounded-md text-sm font-medium text-white shadow hover:shadow-md transition-shadow" style={{ backgroundColor: 'var(--color-primary)'}}>
-                                    View
-                                </button> */}
-                                </div>
-                            </div>
-                            </div>
-                        </Link>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
