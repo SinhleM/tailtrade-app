@@ -7,7 +7,7 @@ const PopularBreeds = ({ breeds }) => {
         <h2 className="text-2xl font-bold mb-8 text-center">POPULAR <span style={{ color: 'var(--color-primary)' }}>BREEDS</span></h2>
         <div className="flex flex-wrap justify-center gap-4 md:gap-8">
           {breeds.map((breed, index) => (
-            <a key={index} href="#" className="flex flex-col items-center group mx-4 p-2 rounded-lg hover:bg-orange-50 transition-colors">
+            <a key={index}   href={`./Menu?search=${breed.name}`}  className="flex flex-col items-center group mx-4 p-2 rounded-lg hover:bg-orange-50 transition-colors">
               <div className="rounded-full overflow-hidden mb-2 border-2 border-gray-200 group-hover:border-orange-400 transition-colors">
                 <img src={breed.icon} alt={breed.name} className="w-16 h-16 md:w-20 md:h-20 object-cover" />
               </div>
@@ -18,7 +18,7 @@ const PopularBreeds = ({ breeds }) => {
         </div>
         <div className="text-center mt-8">
           <a
-            href="#"
+            href="./Menu?search=pet"
             className="inline-block border border-gray-300 text-sm px-6 py-2 rounded-md text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition-colors"
           >
             VIEW ALL BREEDS

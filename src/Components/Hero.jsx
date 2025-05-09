@@ -12,7 +12,7 @@ const Hero = () => {
           </div>
         </div>
         <div className="md:w-1/2 flex justify-center md:justify-end">
-          <img src="./src/placeholder images/hero.jpg.jpg" alt="Dog" className="rounded-lg shadow-lg h-80 object-cover" />
+          <img src="./src/placeholder images/hero.jpg.jpg" alt="Dog" className="rounded-lg shadow-lg h-80 object-cover mr-4" />
         </div>
       </div>
     </section>

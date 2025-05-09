@@ -81,7 +81,7 @@ const Header = ({ scrollToSection }) => {
           <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900 hover:underline">Contact</a>
           {/* Link to create a listing, shown if a user is logged in. */}
           {currentUser && (
-            <Link to="/list-pet" className="text-gray-700 hover:text-gray-900">Make a listing</Link>
+            <Link to="/list-pet" className="text-gray-700 hover:text-gray-900 hover:underline">Create listing</Link>
           )}
         </nav>
 
@@ -98,35 +98,34 @@ const Header = ({ scrollToSection }) => {
               onChange={handleSearchInputChange}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
-              onKeyPress={handleSearchSubmit} // Changed from handleSearch to handleSearchSubmit
+              onKeyPress={handleSearchSubmit}
             />
           </div>
 
-          {/* User Icon: Links to profile if logged in, or login page if not. */}
-          {currentUser ? (
+          {/* User Icon: Only shown if logged in */}
+          {currentUser && (
             <Link to="/profile" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Profile">
               <User size={22} />
             </Link>
-          ) : (
-            <Link to="/login" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Login/Register">
-              <User size={22} />
-            </Link>
           )}
-          {/* Wishlist Icon (functionality not implemented in this scope) */}
-          <a href="#" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Wishlist">
-            <Heart size={22} />
-          </a>
+          
+          {/* Wishlist/Favorite Icon: Only shown if logged in */}
+          {currentUser && (
+            <a href="#" className="text-gray-700 hover:text-gray-900 hidden md:block" title="Wishlist">
+              <Heart size={22} />
+            </a>
+          )}
 
           {/* Sign In / Register Button or User Info */}
           {currentUser ? (
-            <div className="hidden md:flex items-center px-4 py-2 rounded" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
-              <span className="mr-2">Hi, {currentUser.name.split(' ')[0]}</span>
-              <button onClick={handleLogout} className="flex items-center" title="Logout">
+            <div className="hidden md:flex items-center px-4 py-2 rounded-3xl" style={{ backgroundColor: 'var(--color-primary)', color: 'white', maxWidth: '180px' }}>
+              <span className="mr-2 truncate" title={currentUser.name}>Hi, {currentUser.name.split(' ')[0]}</span>
+              <button onClick={handleLogout} className="flex-shrink-0 flex items-center" title="Logout">
                 <LogOut size={18} />
               </button>
             </div>
           ) : (
-            <Link to="/login" className="px-4 py-2 rounded hidden md:block" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
+            <Link to="/login" className="px-4 py-2 rounded-3xl hidden md:block" style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}>
               Sign In / Register
             </Link>
           )}
@@ -138,7 +137,7 @@ const Header = ({ scrollToSection }) => {
               className="text-gray-700 hover:text-gray-900 focus:outline-none"
               aria-label="Toggle menu"
             >
-              <MenuIcon size={28} /> {/* Changed from Menu to MenuIcon */}
+              <MenuIcon size={28} />
             </button>
             {/* Dropdown Menu */}
             {isMenuOpen && (
@@ -152,7 +151,7 @@ const Header = ({ scrollToSection }) => {
                     {/* Logged-in user menu items */}
                     <div className="block px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
                       Signed in as:
-                      <span className="block font-medium text-gray-800">{currentUser.name}</span>
+                      <span className="block font-medium text-gray-800 truncate" title={currentUser.name}>{currentUser.name}</span>
                       <span className="block text-xs text-gray-600">({currentUser.role})</span>
                     </div>
                     <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>
@@ -200,7 +199,7 @@ const Header = ({ scrollToSection }) => {
             onChange={handleSearchInputChange}
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
-            onKeyPress={handleSearchSubmit} // Changed from handleSearch to handleSearchSubmit
+            onKeyPress={handleSearchSubmit}
           />
         </div>
       </div>

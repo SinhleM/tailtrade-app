@@ -13,7 +13,7 @@ const ListedPets = ({ pets }) => {
         </div>
         <div className="text-center mt-8">
           <a
-            href="#"
+            href="./Menu?search=pet"
             className="inline-block bg-white text-sm px-6 py-2 rounded-md text-gray-800 hover:bg-gray-50 transition-colors"
           >
             VIEW ALL PETS
