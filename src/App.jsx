@@ -5,7 +5,7 @@ import TailTradeHomePage from './Components/HomePage.jsx';
 import LoginRegister from './Components/LoginRegister.jsx';
 import Profile from './Components/Profile.jsx';
 import Menu from './Components/Menu.jsx';
-import ListingDetail from './Components/ListingDetail.jsx'; 
+import ListingDetail from './Components/ListingDetails.jsx'; 
 import CreateListing from './Components/CreateListing.jsx'; 
 import './App.css';
 

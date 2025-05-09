@@ -65,11 +65,7 @@ const Header = ({ scrollToSection }) => {
       <div className="container mx-auto py-4 px-4 flex items-center justify-between">
         {/* Logo and Title */}
         <div className="flex items-center">
-          <div className="mr-4">
-            <div className="flex items-center justify-center w-10 h-10 rounded-full" style={{ backgroundColor: 'var(--color-primary)' }}>
-              <span className="text-white font-bold">T</span>
-            </div>
-          </div>
+
           <Link to="/">
             <h1 className="text-2xl font-bold italic bg-gradient-to-r from-gray-950 via-gray-800 to-gray-800 bg-[length:250%_100%] bg-right bg-clip-text text-transparent">
               TailTrade
@@ -80,9 +76,9 @@ const Header = ({ scrollToSection }) => {
         {/* Desktop Navigation Links (Hidden on Mobile) */}
         <nav className="hidden md:flex space-x-6">
           {/* Link to browse pets/items, scrolls to section or navigates to Menu */}
-          <Link to="/Menu" className="text-gray-700 hover:text-gray-900">Browse Pets & Items</Link>
-          <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">About</a>
-          <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900">Contact</a>
+          <Link to="/Menu" className="text-gray-700 hover:text-gray-900 hover:underline">Pets & Items</Link>
+          <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900 hover:underline">About</a>
+          <a href="/#footer" onClick={scrollToSection ? scrollToSection('footer') : (e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-gray-700 hover:text-gray-900 hover:underline">Contact</a>
           {/* Link to create a listing, shown if a user is logged in. */}
           {currentUser && (
             <Link to="/list-pet" className="text-gray-700 hover:text-gray-900">Make a listing</Link>

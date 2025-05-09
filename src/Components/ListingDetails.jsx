@@ -26,7 +26,7 @@ const ListingDetail = () => {
         setLoading(true);
         setError(null);
         
-        fetch(`http://localhost/PET-C2C-PROJECT/TailTrade/Backend/get_listing_detail.php?type=${listingType}&id=${listingId}`)
+        fetch(`http://localhost/PET-C2C-PROJECT/TailTrade/Backend/Get_Listing_Details.php?type=${listingType}&id=${listingId}`)
             .then(response => {
                 if (!response.ok) {
                     // Try to get error message from response body if available
