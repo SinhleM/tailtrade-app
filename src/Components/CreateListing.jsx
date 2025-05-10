@@ -243,64 +243,64 @@ const CreateListing = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
+    <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
       <Header scrollToSection={scrollToSection} />
       
-      <div className="flex-grow py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
-            <h1 className="text-2xl font-bold mb-6">Make a Listing</h1>
+      <div className="flex-grow py-12">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-6 sm:p-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Listing</h1>
             
             {/* Listing Type Selector */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mb-8">
+              <label className="block text-base font-medium text-gray-700 mb-3">
                 What would you like to list?
               </label>
-              <div className="flex space-x-4">
-                <label className="inline-flex items-center">
+              <div className="flex space-x-6">
+                <label className="inline-flex items-center space-x-2 cursor-pointer">
                   <input
                     type="radio"
                     name="listingType"
                     value="pet"
                     checked={listingType === 'pet'}
                     onChange={handleListingTypeChange}
-                    className="form-radio h-4 w-4 text-orange-500"
+                    className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300"
                   />
-                  <span className="ml-2">Pet</span>
+                  <span className="text-gray-700">Pet</span>
                 </label>
-                <label className="inline-flex items-center">
+                <label className="inline-flex items-center space-x-2 cursor-pointer">
                   <input
                     type="radio"
                     name="listingType"
                     value="supply"
                     checked={listingType === 'supply'}
                     onChange={handleListingTypeChange}
-                    className="form-radio h-4 w-4 text-orange-500"
+                    className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300"
                   />
-                  <span className="ml-2">Pet Supply/Item</span>
+                  <span className="text-gray-700">Pet Supply/Item</span>
                 </label>
               </div>
             </div>
             
             {submitMessage.message && (
               <div 
-                className={`mb-6 p-3 rounded-md ${
+                className={`mb-6 p-4 rounded-lg ${
                   submitMessage.type === 'success' 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-red-100 text-red-700'
+                    ? 'bg-green-50 text-green-800 border border-green-200' 
+                    : 'bg-red-50 text-red-800 border border-red-200'
                 }`}
               >
                 {submitMessage.message}
               </div>
             )}
             
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-6">
               {/* Pet Listing Form */}
               {listingType === 'pet' && (
-                <>
-                  <div className="mb-4">
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                      Pet Name
+                <div className="space-y-5">
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Pet Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -308,17 +308,18 @@ const CreateListing = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.name ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.name ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
+                      placeholder="e.g., Max"
                     />
                     {errors.name && (
-                      <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.name}</p>
                     )}
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div>
+                    <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1.5">
                       Pet Type
                     </label>
                     <select
@@ -326,16 +327,16 @@ const CreateListing = () => {
                       name="type"
                       value={formData.type}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-500 shadow-sm"
                     >
                       <option value="dog">Dog</option>
                       <option value="cat">Cat</option>
                     </select>
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-1">
-                      Breed
+                  <div>
+                    <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Breed <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -343,19 +344,20 @@ const CreateListing = () => {
                       name="breed"
                       value={formData.breed}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.breed ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.breed ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
+                      placeholder="e.g., Labrador Retriever"
                     />
                     {errors.breed && (
-                      <p className="mt-1 text-sm text-red-600">{errors.breed}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.breed}</p>
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
-                        Age (in years)
+                      <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Age (years) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -363,19 +365,20 @@ const CreateListing = () => {
                         name="age"
                         value={formData.age}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 border ${
-                          errors.age ? 'border-red-300' : 'border-gray-300'
-                        } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                        className={`block w-full px-4 py-2.5 rounded-lg border ${
+                          errors.age ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                        } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
                         min="0"
+                        placeholder="e.g., 3"
                       />
                       {errors.age && (
-                        <p className="mt-1 text-sm text-red-600">{errors.age}</p>
+                        <p className="mt-2 text-sm text-red-600">{errors.age}</p>
                       )}
                     </div>
                     
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                        Price (ZAR)
+                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Price (ZAR) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -383,21 +386,22 @@ const CreateListing = () => {
                         name="price"
                         value={formData.price}
                         onChange={handleChange}
-                        className={`w-full px-3 py-2 border ${
-                          errors.price ? 'border-red-300' : 'border-gray-300'
-                        } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                        className={`block w-full px-4 py-2.5 rounded-lg border ${
+                          errors.price ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                        } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
                         min="0"
                         step="0.01"
+                        placeholder="e.g., 1500.00"
                       />
                       {errors.price && (
-                        <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+                        <p className="mt-2 text-sm text-red-600">{errors.price}</p>
                       )}
                     </div>
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
-                      Location
+                  <div>
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Location <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -405,19 +409,19 @@ const CreateListing = () => {
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.location ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.location ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
                       placeholder="e.g., Cape Town, South Africa"
                     />
                     {errors.location && (
-                      <p className="mt-1 text-sm text-red-600">{errors.location}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.location}</p>
                     )}
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       id="description"
@@ -425,19 +429,19 @@ const CreateListing = () => {
                       value={formData.description}
                       onChange={handleChange}
                       rows="4"
-                      className={`w-full px-3 py-2 border ${
-                        errors.description ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-                      placeholder="Describe your pet..."
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.description ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
+                      placeholder="Tell us about your pet's personality, health, etc."
                     />
                     {errors.description && (
-                      <p className="mt-1 text-sm text-red-600">{errors.description}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.description}</p>
                     )}
                   </div>
                   
-                  <div className="mb-6">
-                    <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1">
-                      Image URL
+                  <div>
+                    <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Image URL <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -445,27 +449,27 @@ const CreateListing = () => {
                       name="image_url"
                       value={formData.image_url}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.image_url ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.image_url ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
                       placeholder="https://example.com/pet-image.jpg"
                     />
                     {errors.image_url && (
-                      <p className="mt-1 text-sm text-red-600">{errors.image_url}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.image_url}</p>
                     )}
-                    <p className="mt-1 text-sm text-gray-500">
-                      Note: In a production app, we would implement direct image uploads. For now, please provide a URL to an existing image.
+                    <p className="mt-2 text-sm text-gray-500">
+                      Note: Please provide a URL to an existing image of your pet.
                     </p>
                   </div>
-                </>
+                </div>
               )}
               
               {/* Pet Supply/Item Listing Form */}
               {listingType === 'supply' && (
-                <>
-                  <div className="mb-4">
-                    <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Item Name
+                <div className="space-y-5">
+                  <div>
+                    <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Item Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -473,17 +477,18 @@ const CreateListing = () => {
                       name="itemName"
                       value={formData.itemName}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.itemName ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.itemName ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
+                      placeholder="e.g., Dog Bed"
                     />
                     {errors.itemName && (
-                      <p className="mt-1 text-sm text-red-600">{errors.itemName}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.itemName}</p>
                     )}
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div>
+                    <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1.5">
                       Condition
                     </label>
                     <select
@@ -491,7 +496,7 @@ const CreateListing = () => {
                       name="condition"
                       value={formData.condition}
                       onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500"
+                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-500 shadow-sm"
                     >
                       <option value="new">New</option>
                       <option value="like-new">Like New</option>
@@ -501,9 +506,9 @@ const CreateListing = () => {
                     </select>
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="itemPrice" className="block text-sm font-medium text-gray-700 mb-1">
-                      Price (ZAR)
+                  <div>
+                    <label htmlFor="itemPrice" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Price (ZAR) <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -511,20 +516,21 @@ const CreateListing = () => {
                       name="itemPrice"
                       value={formData.itemPrice}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.itemPrice ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.itemPrice ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
                       min="0"
                       step="0.01"
+                      placeholder="e.g., 499.99"
                     />
                     {errors.itemPrice && (
-                      <p className="mt-1 text-sm text-red-600">{errors.itemPrice}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.itemPrice}</p>
                     )}
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="itemLocation" className="block text-sm font-medium text-gray-700 mb-1">
-                      Location
+                  <div>
+                    <label htmlFor="itemLocation" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Location <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -532,19 +538,19 @@ const CreateListing = () => {
                       name="itemLocation"
                       value={formData.itemLocation}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.itemLocation ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-                      placeholder="e.g., Cape Town, South Africa"
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.itemLocation ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
+                      placeholder="e.g., Johannesburg, South Africa"
                     />
                     {errors.itemLocation && (
-                      <p className="mt-1 text-sm text-red-600">{errors.itemLocation}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.itemLocation}</p>
                     )}
                   </div>
                   
-                  <div className="mb-4">
-                    <label htmlFor="itemDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
+                  <div>
+                    <label htmlFor="itemDescription" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       id="itemDescription"
@@ -552,19 +558,19 @@ const CreateListing = () => {
                       value={formData.itemDescription}
                       onChange={handleChange}
                       rows="4"
-                      className={`w-full px-3 py-2 border ${
-                        errors.itemDescription ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
-                      placeholder="Describe your item..."
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.itemDescription ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
+                      placeholder="Describe the item's features, condition, etc."
                     />
                     {errors.itemDescription && (
-                      <p className="mt-1 text-sm text-red-600">{errors.itemDescription}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.itemDescription}</p>
                     )}
                   </div>
                   
-                  <div className="mb-6">
-                    <label htmlFor="itemImage_url" className="block text-sm font-medium text-gray-700 mb-1">
-                      Image URL
+                  <div>
+                    <label htmlFor="itemImage_url" className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Image URL <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -572,29 +578,36 @@ const CreateListing = () => {
                       name="itemImage_url"
                       value={formData.itemImage_url}
                       onChange={handleChange}
-                      className={`w-full px-3 py-2 border ${
-                        errors.itemImage_url ? 'border-red-300' : 'border-gray-300'
-                      } rounded-md focus:outline-none focus:ring-orange-500 focus:border-orange-500`}
+                      className={`block w-full px-4 py-2.5 rounded-lg border ${
+                        errors.itemImage_url ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
+                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
                       placeholder="https://example.com/item-image.jpg"
                     />
                     {errors.itemImage_url && (
-                      <p className="mt-1 text-sm text-red-600">{errors.itemImage_url}</p>
+                      <p className="mt-2 text-sm text-red-600">{errors.itemImage_url}</p>
                     )}
-                    <p className="mt-1 text-sm text-gray-500">
-                      Note: In a production app, we would implement direct image uploads. For now, please provide a URL to an existing image.
+                    <p className="mt-2 text-sm text-gray-500">
+                      Note: Please provide a URL to an existing image of your item.
                     </p>
                   </div>
-                </>
+                </div>
               )}
               
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2 rounded-md text-white font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
-                  style={{ backgroundColor: 'var(--color-primary)' }}
+                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Submitting...' : 'Create Listing'}
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : 'Create Listing'}
                 </button>
               </div>
             </form>

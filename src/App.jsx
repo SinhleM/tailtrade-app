@@ -19,6 +19,7 @@ function App() {
         <Route path="/list-pet" element={<CreateListing />} />
         <Route path="/Menu" element={<Menu />} />
         <Route path="/listing/:listingType/:listingId" element={<ListingDetail />} />
+
       </Routes>
     </Router>
   );
