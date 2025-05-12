@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from './Header';
-import Footer from './Footer';
+import Header from './Header'; // Assuming these exist
+import Footer from './Footer'; // Assuming these exist
 
 const CreateListing = () => {
   const [userData, setUserData] = useState(null);
-  const [listingType, setListingType] = useState('pet'); // Default to pet listing
+  const [listingType, setListingType] = useState('pet');
   const [formData, setFormData] = useState({
     // Pet form fields
     name: '',
@@ -15,94 +15,52 @@ const CreateListing = () => {
     price: '',
     location: '',
     description: '',
-    image_url: '',
-    
-    // Supply form fields
-    itemName: '',
+    // Pet Supply form fields
+    itemName: '', // Will be mapped to 'name' for supplies
     condition: 'new',
-    itemPrice: '',
-    itemLocation: '',
-    itemDescription: '',
-    itemImage_url: ''
+    itemPrice: '', // Will be mapped to 'price' for supplies
+    itemLocation: '', // Will be mapped to 'location' for supplies
+    itemDescription: '', // Will be mapped to 'description' for supplies
   });
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', message: '' });
   const navigate = useNavigate();
 
-  // Load user data from localStorage
   useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
       setUserData(JSON.parse(user));
     } else {
-      // If not logged in, redirect to login
       navigate('/login');
     }
   }, [navigate]);
 
-  const validatePetForm = () => {
+  const validateForm = () => {
     const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = 'Pet name is required';
+    if (listingType === 'pet') {
+      if (!formData.name.trim()) newErrors.name = 'Pet name is required';
+      if (!formData.breed.trim()) newErrors.breed = 'Breed is required';
+      if (!formData.age.trim()) newErrors.age = 'Age is required';
+      else if (isNaN(formData.age) || parseInt(formData.age) < 0) newErrors.age = 'Age must be a valid number';
+      if (!formData.price.trim()) newErrors.price = 'Price is required';
+      else if (isNaN(formData.price) || parseFloat(formData.price) < 0) newErrors.price = 'Price must be a valid number';
+      if (!formData.location.trim()) newErrors.location = 'Location is required';
+      if (!formData.description.trim()) newErrors.description = 'Description is required';
+    } else { // Supply
+      if (!formData.itemName.trim()) newErrors.itemName = 'Item name is required';
+      if (!formData.itemPrice.trim()) newErrors.itemPrice = 'Price is required';
+      else if (isNaN(formData.itemPrice) || parseFloat(formData.itemPrice) < 0) newErrors.itemPrice = 'Price must be a valid number';
+      if (!formData.itemLocation.trim()) newErrors.itemLocation = 'Location is required';
+      if (!formData.itemDescription.trim()) newErrors.itemDescription = 'Description is required';
     }
-    
-    if (!formData.breed.trim()) {
-      newErrors.breed = 'Breed is required';
-    }
-    
-    if (!formData.age.trim()) {
-      newErrors.age = 'Age is required';
-    } else if (isNaN(formData.age) || parseInt(formData.age) < 0) {
-      newErrors.age = 'Age must be a valid number';
-    }
-    
-    if (!formData.price.trim()) {
-      newErrors.price = 'Price is required';
-    } else if (isNaN(formData.price) || parseFloat(formData.price) < 0) {
-      newErrors.price = 'Price must be a valid number';
-    }
-    
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
-    }
-    
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    }
-    
-    if (!formData.image_url.trim()) {
-      newErrors.image_url = 'Image URL is required';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
-  const validateSupplyForm = () => {
-    const newErrors = {};
-    
-    if (!formData.itemName.trim()) {
-      newErrors.itemName = 'Item name is required';
-    }
-    
-    if (!formData.itemPrice.trim()) {
-      newErrors.itemPrice = 'Price is required';
-    } else if (isNaN(formData.itemPrice) || parseFloat(formData.itemPrice) < 0) {
-      newErrors.itemPrice = 'Price must be a valid number';
-    }
-    
-    if (!formData.itemLocation.trim()) {
-      newErrors.itemLocation = 'Location is required';
-    }
-    
-    if (!formData.itemDescription.trim()) {
-      newErrors.itemDescription = 'Description is required';
-    }
-    
-    if (!formData.itemImage_url.trim()) {
-      newErrors.itemImage_url = 'Image URL is required';
+    if (selectedFiles.length === 0) {
+      newErrors.images = 'Please upload at least one image.';
+    } else if (selectedFiles.length > 5) {
+      newErrors.images = 'You can upload a maximum of 5 images.';
     }
     
     setErrors(newErrors);
@@ -117,62 +75,93 @@ const CreateListing = () => {
     }));
   };
 
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newFiles = [...selectedFiles, ...files].slice(0, 5); 
+    setSelectedFiles(newFiles);
+
+    // Clean up old previews before creating new ones for the updated file list
+    imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(newPreviews);
+
+    if (newFiles.length > 0) {
+        setErrors(prevErrors => ({ ...prevErrors, images: null }));
+    }
+    if (e.target.files.length + selectedFiles.length > 5 && selectedFiles.length < 5) { // If trying to add more than allowed when not full
+         setErrors(prevErrors => ({ ...prevErrors, images: 'You can upload a maximum of 5 images. Some files were not added.' }));
+    } else if (newFiles.length >= 5) {
+         setErrors(prevErrors => ({ ...prevErrors, images: null })); // Clear error if now at max or below
+    }
+     // Reset the file input value to allow selecting the same file again if removed
+     e.target.value = null;
+  };
+
+  const removeImage = (indexToRemove) => {
+    // Revoke object URL for the image being removed
+    URL.revokeObjectURL(imagePreviews[indexToRemove]);
+
+    setSelectedFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
+    setImagePreviews(prevPreviews => prevPreviews.filter((_, index) => index !== indexToRemove));
+    
+    // Clear images error if any
+     setErrors(prevErrors => ({ ...prevErrors, images: null }));
+  };
+
   const handleListingTypeChange = (e) => {
     setListingType(e.target.value);
-    // Clear any previous error or success messages
     setSubmitMessage({ type: '', message: '' });
     setErrors({});
+    setFormData({
+        name: '', type: 'dog', breed: '', age: '', price: '', location: '', description: '',
+        itemName: '', condition: 'new', itemPrice: '', itemLocation: '', itemDescription: '',
+    });
+    // Clean up previews from previous type
+    imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
+    setSelectedFiles([]);
+    setImagePreviews([]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate form based on listing type
-    const isValid = listingType === 'pet' ? validatePetForm() : validateSupplyForm();
-    
-    if (!isValid) {
+    if (!validateForm()) {
       return;
     }
     
     setIsSubmitting(true);
     setSubmitMessage({ type: '', message: '' });
     
+    const submissionData = new FormData();
+    submissionData.append('owner_id', userData.id);
+
+    if (listingType === 'pet') {
+      submissionData.append('name', formData.name);
+      submissionData.append('type', formData.type);
+      submissionData.append('breed', formData.breed);
+      submissionData.append('age', formData.age);
+      submissionData.append('price', formData.price);
+      submissionData.append('location', formData.location);
+      submissionData.append('description', formData.description);
+    } else { // supply
+      submissionData.append('name', formData.itemName); 
+      submissionData.append('condition', formData.condition);
+      submissionData.append('price', formData.itemPrice); 
+      submissionData.append('location', formData.itemLocation); 
+      submissionData.append('description', formData.itemDescription); 
+    }
+
+    selectedFiles.forEach((file) => {
+      submissionData.append('images[]', file); 
+    });
+
+    const endpoint = listingType === 'pet'
+      ? 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_pet.php'
+      : 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_supplies.php';
+      
     try {
-      let endpoint;
-      let requestData;
-      
-      if (listingType === 'pet') {
-        endpoint = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_pet.php';
-        requestData = {
-          owner_id: userData.id,
-          name: formData.name,
-          type: formData.type,
-          breed: formData.breed,
-          age: formData.age,
-          price: formData.price,
-          location: formData.location,
-          description: formData.description,
-          image_url: formData.image_url
-        };
-      } else {
-        endpoint = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_supplies.php';
-        requestData = {
-          owner_id: userData.id,
-          name: formData.itemName,
-          condition: formData.condition,
-          price: formData.itemPrice,
-          location: formData.itemLocation,
-          description: formData.itemDescription,
-          image_url: formData.itemImage_url
-        };
-      }
-      
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
+        body: submissionData,
       });
       
       const data = await response.json();
@@ -182,33 +171,13 @@ const CreateListing = () => {
           type: 'success',
           message: listingType === 'pet' ? 'Pet listed successfully!' : 'Item listed successfully!'
         });
-        
-        // Clear form after successful submission
-        if (listingType === 'pet') {
-          setFormData(prevState => ({
-            ...prevState,
-            name: '',
-            type: 'dog',
-            breed: '',
-            age: '',
-            price: '',
-            location: '',
-            description: '',
-            image_url: ''
-          }));
-        } else {
-          setFormData(prevState => ({
-            ...prevState,
-            itemName: '',
-            condition: 'new',
-            itemPrice: '',
-            itemLocation: '',
-            itemDescription: '',
-            itemImage_url: ''
-          }));
-        }
-        
-        // Redirect to homepage after a short delay
+        setFormData({
+            name: '', type: 'dog', breed: '', age: '', price: '', location: '', description: '',
+            itemName: '', condition: 'new', itemPrice: '', itemLocation: '', itemDescription: '',
+        });
+        imagePreviews.forEach(preview => URL.revokeObjectURL(preview)); // Clean up current previews
+        setSelectedFiles([]);
+        setImagePreviews([]);
         setTimeout(() => {
           navigate('/');
         }, 2000);
@@ -221,15 +190,25 @@ const CreateListing = () => {
     } catch (error) {
       setSubmitMessage({
         type: 'error',
-        message: 'Server error. Please try again later.'
+        message: 'Server error or network issue. Please try again later.'
       });
-      console.error('Error:', error);
+      console.error('Error submitting form:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Simple scroll function for footer
+   useEffect(() => {
+    return () => {
+      imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
+    };
+  }, []); // Run only on unmount
+
+  if (!userData) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  // Simple scroll function for footer (if needed by Header/Footer)
   const scrollToSection = (sectionId) => (event) => {
     event.preventDefault();
     const section = document.getElementById(sectionId);
@@ -237,10 +216,6 @@ const CreateListing = () => {
       section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
-
-  if (!userData) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 font-sans">
@@ -251,32 +226,17 @@ const CreateListing = () => {
           <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-sm p-6 sm:p-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-8">Create New Listing</h1>
             
-            {/* Listing Type Selector */}
             <div className="mb-8">
               <label className="block text-base font-medium text-gray-700 mb-3">
                 What would you like to list?
               </label>
               <div className="flex space-x-6">
                 <label className="inline-flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="listingType"
-                    value="pet"
-                    checked={listingType === 'pet'}
-                    onChange={handleListingTypeChange}
-                    className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300"
-                  />
+                  <input type="radio" name="listingType" value="pet" checked={listingType === 'pet'} onChange={handleListingTypeChange} className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300"/>
                   <span className="text-gray-700">Pet</span>
                 </label>
                 <label className="inline-flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="listingType"
-                    value="supply"
-                    checked={listingType === 'supply'}
-                    onChange={handleListingTypeChange}
-                    className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300"
-                  />
+                  <input type="radio" name="listingType" value="supply" checked={listingType === 'supply'} onChange={handleListingTypeChange} className="h-5 w-5 text-orange-600 focus:ring-orange-500 border-gray-300"/>
                   <span className="text-gray-700">Pet Supply/Item</span>
                 </label>
               </div>
@@ -295,209 +255,60 @@ const CreateListing = () => {
             )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Pet Listing Form */}
               {listingType === 'pet' && (
                 <div className="space-y-5">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Pet Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.name ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="e.g., Max"
-                    />
-                    {errors.name && (
-                      <p className="mt-2 text-sm text-red-600">{errors.name}</p>
-                    )}
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">Pet Name <span className="text-red-500">*</span></label>
+                    <input type="text" id="name" name="name" value={formData.name} onChange={handleChange} className={`block w-full px-4 py-2.5 rounded-lg border ${errors.name ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., Max"/>
+                    {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name}</p>}
                   </div>
-                  
                   <div>
-                    <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Pet Type
-                    </label>
-                    <select
-                      id="type"
-                      name="type"
-                      value={formData.type}
-                      onChange={handleChange}
-                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-500 shadow-sm"
-                    >
+                    <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1.5">Pet Type</label>
+                    <select id="type" name="type" value={formData.type} onChange={handleChange} className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-500 shadow-sm">
                       <option value="dog">Dog</option>
                       <option value="cat">Cat</option>
                     </select>
                   </div>
-                  
                   <div>
-                    <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Breed <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="breed"
-                      name="breed"
-                      value={formData.breed}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.breed ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="e.g., Labrador Retriever"
-                    />
-                    {errors.breed && (
-                      <p className="mt-2 text-sm text-red-600">{errors.breed}</p>
-                    )}
+                    <label htmlFor="breed" className="block text-sm font-medium text-gray-700 mb-1.5">Breed <span className="text-red-500">*</span></label>
+                    <input type="text" id="breed" name="breed" value={formData.breed} onChange={handleChange} className={`block w-full px-4 py-2.5 rounded-lg border ${errors.breed ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., Labrador Retriever"/>
+                    {errors.breed && <p className="mt-2 text-sm text-red-600">{errors.breed}</p>}
                   </div>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Age (years) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        id="age"
-                        name="age"
-                        value={formData.age}
-                        onChange={handleChange}
-                        className={`block w-full px-4 py-2.5 rounded-lg border ${
-                          errors.age ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                        } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                        min="0"
-                        placeholder="e.g., 3"
-                      />
-                      {errors.age && (
-                        <p className="mt-2 text-sm text-red-600">{errors.age}</p>
-                      )}
+                      <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1.5">Age (years) <span className="text-red-500">*</span></label>
+                      <input type="number" id="age" name="age" value={formData.age} onChange={handleChange} min="0" className={`block w-full px-4 py-2.5 rounded-lg border ${errors.age ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., 3"/>
+                      {errors.age && <p className="mt-2 text-sm text-red-600">{errors.age}</p>}
                     </div>
-                    
                     <div>
-                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1.5">
-                        Price (ZAR) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        id="price"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleChange}
-                        className={`block w-full px-4 py-2.5 rounded-lg border ${
-                          errors.price ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                        } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                        min="0"
-                        step="0.01"
-                        placeholder="e.g., 1500.00"
-                      />
-                      {errors.price && (
-                        <p className="mt-2 text-sm text-red-600">{errors.price}</p>
-                      )}
+                      <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1.5">Price (ZAR) <span className="text-red-500">*</span></label>
+                      <input type="number" id="price" name="price" value={formData.price} onChange={handleChange} min="0" step="0.01" className={`block w-full px-4 py-2.5 rounded-lg border ${errors.price ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., 1500.00"/>
+                      {errors.price && <p className="mt-2 text-sm text-red-600">{errors.price}</p>}
                     </div>
                   </div>
-                  
                   <div>
-                    <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Location <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="location"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.location ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="e.g., Cape Town, South Africa"
-                    />
-                    {errors.location && (
-                      <p className="mt-2 text-sm text-red-600">{errors.location}</p>
-                    )}
+                    <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1.5">Location <span className="text-red-500">*</span></label>
+                    <input type="text" id="location" name="location" value={formData.location} onChange={handleChange} className={`block w-full px-4 py-2.5 rounded-lg border ${errors.location ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., Cape Town, South Africa"/>
+                    {errors.location && <p className="mt-2 text-sm text-red-600">{errors.location}</p>}
                   </div>
-                  
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="description"
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      rows="4"
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.description ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="Tell us about your pet's personality, health, etc."
-                    />
-                    {errors.description && (
-                      <p className="mt-2 text-sm text-red-600">{errors.description}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Image URL <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="image_url"
-                      name="image_url"
-                      value={formData.image_url}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.image_url ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="https://example.com/pet-image.jpg"
-                    />
-                    {errors.image_url && (
-                      <p className="mt-2 text-sm text-red-600">{errors.image_url}</p>
-                    )}
-                    <p className="mt-2 text-sm text-gray-500">
-                      Note: Please provide a URL to an existing image of your pet.
-                    </p>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-red-500">*</span></label>
+                    <textarea id="description" name="description" value={formData.description} onChange={handleChange} rows="4" className={`block w-full px-4 py-2.5 rounded-lg border ${errors.description ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="Tell us about your pet's personality, health, etc."></textarea>
+                    {errors.description && <p className="mt-2 text-sm text-red-600">{errors.description}</p>}
                   </div>
                 </div>
               )}
               
-              {/* Pet Supply/Item Listing Form */}
               {listingType === 'supply' && (
                 <div className="space-y-5">
                   <div>
-                    <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Item Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="itemName"
-                      name="itemName"
-                      value={formData.itemName}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.itemName ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="e.g., Dog Bed"
-                    />
-                    {errors.itemName && (
-                      <p className="mt-2 text-sm text-red-600">{errors.itemName}</p>
-                    )}
+                    <label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1.5">Item Name <span className="text-red-500">*</span></label>
+                    <input type="text" id="itemName" name="itemName" value={formData.itemName} onChange={handleChange} className={`block w-full px-4 py-2.5 rounded-lg border ${errors.itemName ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., Dog Bed"/>
+                    {errors.itemName && <p className="mt-2 text-sm text-red-600">{errors.itemName}</p>}
                   </div>
-                  
                   <div>
-                    <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Condition
-                    </label>
-                    <select
-                      id="condition"
-                      name="condition"
-                      value={formData.condition}
-                      onChange={handleChange}
-                      className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-500 shadow-sm"
-                    >
+                    <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-1.5">Condition</label>
+                    <select id="condition" name="condition" value={formData.condition} onChange={handleChange} className="block w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-300 focus:border-orange-500 shadow-sm">
                       <option value="new">New</option>
                       <option value="like-new">Like New</option>
                       <option value="good">Good</option>
@@ -505,93 +316,60 @@ const CreateListing = () => {
                       <option value="used">Used</option>
                     </select>
                   </div>
-                  
                   <div>
-                    <label htmlFor="itemPrice" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Price (ZAR) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      id="itemPrice"
-                      name="itemPrice"
-                      value={formData.itemPrice}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.itemPrice ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      min="0"
-                      step="0.01"
-                      placeholder="e.g., 499.99"
-                    />
-                    {errors.itemPrice && (
-                      <p className="mt-2 text-sm text-red-600">{errors.itemPrice}</p>
-                    )}
+                    <label htmlFor="itemPrice" className="block text-sm font-medium text-gray-700 mb-1.5">Price (ZAR) <span className="text-red-500">*</span></label>
+                    <input type="number" id="itemPrice" name="itemPrice" value={formData.itemPrice} onChange={handleChange} min="0" step="0.01" className={`block w-full px-4 py-2.5 rounded-lg border ${errors.itemPrice ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., 499.99"/>
+                    {errors.itemPrice && <p className="mt-2 text-sm text-red-600">{errors.itemPrice}</p>}
                   </div>
-                  
                   <div>
-                    <label htmlFor="itemLocation" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Location <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="itemLocation"
-                      name="itemLocation"
-                      value={formData.itemLocation}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.itemLocation ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="e.g., Johannesburg, South Africa"
-                    />
-                    {errors.itemLocation && (
-                      <p className="mt-2 text-sm text-red-600">{errors.itemLocation}</p>
-                    )}
+                    <label htmlFor="itemLocation" className="block text-sm font-medium text-gray-700 mb-1.5">Location <span className="text-red-500">*</span></label>
+                    <input type="text" id="itemLocation" name="itemLocation" value={formData.itemLocation} onChange={handleChange} className={`block w-full px-4 py-2.5 rounded-lg border ${errors.itemLocation ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="e.g., Johannesburg, South Africa"/>
+                    {errors.itemLocation && <p className="mt-2 text-sm text-red-600">{errors.itemLocation}</p>}
                   </div>
-                  
                   <div>
-                    <label htmlFor="itemDescription" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="itemDescription"
-                      name="itemDescription"
-                      value={formData.itemDescription}
-                      onChange={handleChange}
-                      rows="4"
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.itemDescription ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="Describe the item's features, condition, etc."
-                    />
-                    {errors.itemDescription && (
-                      <p className="mt-2 text-sm text-red-600">{errors.itemDescription}</p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="itemImage_url" className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Image URL <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="itemImage_url"
-                      name="itemImage_url"
-                      value={formData.itemImage_url}
-                      onChange={handleChange}
-                      className={`block w-full px-4 py-2.5 rounded-lg border ${
-                        errors.itemImage_url ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'
-                      } focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`}
-                      placeholder="https://example.com/item-image.jpg"
-                    />
-                    {errors.itemImage_url && (
-                      <p className="mt-2 text-sm text-red-600">{errors.itemImage_url}</p>
-                    )}
-                    <p className="mt-2 text-sm text-gray-500">
-                      Note: Please provide a URL to an existing image of your item.
-                    </p>
+                    <label htmlFor="itemDescription" className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-red-500">*</span></label>
+                    <textarea id="itemDescription" name="itemDescription" value={formData.itemDescription} onChange={handleChange} rows="4" className={`block w-full px-4 py-2.5 rounded-lg border ${errors.itemDescription ? 'border-red-300 focus:ring-red-300' : 'border-gray-300 focus:ring-orange-300'} focus:outline-none focus:ring-2 focus:border-orange-500 shadow-sm`} placeholder="Describe the item's features, condition, etc."></textarea>
+                    {errors.itemDescription && <p className="mt-2 text-sm text-red-600">{errors.itemDescription}</p>}
                   </div>
                 </div>
               )}
+              
+              {/* Image Upload Section */}
+              <div>
+                <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Images (up to 5) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="file"
+                  id="images"
+                  name="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
+                  disabled={selectedFiles.length >= 5}
+                />
+                {errors.images && <p className="mt-2 text-sm text-red-600">{errors.images}</p>}
+                {selectedFiles.length >= 5 && <p className="mt-1 text-sm text-orange-500">Maximum of 5 images reached.</p>}
+                
+                {imagePreviews.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {imagePreviews.map((previewUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img src={previewUrl} alt={`Preview ${index + 1}`} className="w-full h-24 object-cover rounded-md border border-gray-200" />
+                        <button 
+                          type="button" 
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 text-xs w-5 h-5 flex items-center justify-center opacity-75 group-hover:opacity-100 transition-opacity"
+                          aria-label="Remove image"
+                        >
+                          &#x2715; 
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               
               <div className="flex justify-end pt-2">
                 <button
