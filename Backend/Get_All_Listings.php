@@ -2,12 +2,19 @@
 require 'Database.php'; // This already includes CORS headers
 
 $response = ['success' => false, 'listings' => [], 'message' => ''];
-// Define your base URL for images if paths are relative
-// $imageBaseUrl = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/'; // Adjust as per your setup
+
+// Build proper base URL to 'uploads/listing_images/' folder
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    $protocol = "https://";
+} else {
+    $protocol = "http://";
+}
+
+// This will produce something like 'http://localhost/TailTrade/Backend/'
+$scriptDir = dirname($_SERVER['SCRIPT_NAME']); // e.g. /TailTrade/Backend
+$imageBaseUrl = rtrim($protocol . $_SERVER['HTTP_HOST'] . $scriptDir, '/') . '/uploads/listing_images/';
 
 try {
-    // The image_url alias now fetches from listing_images
-    // It takes the image with the lowest sort_order, then lowest id as the primary.
     $sql = "
         SELECT
             p.id,
@@ -22,7 +29,7 @@ try {
             p.created_at,
             'pet' AS listing_type,
             NULL AS `condition`,
-            (SELECT li.image_path FROM listing_images li WHERE li.listing_id = p.id AND li.item_type = 'pet' ORDER BY li.sort_order ASC, li.id ASC LIMIT 1) AS image_url
+            (SELECT li.image_path FROM listing_images li WHERE li.listing_id = p.id AND li.item_type = 'pet' ORDER BY li.sort_order ASC, li.id ASC LIMIT 1) AS image_path_relative
         FROM
             pets p
         UNION ALL
@@ -39,7 +46,7 @@ try {
             ps.created_at,
             'supply' AS listing_type,
             ps.condition,
-            (SELECT li.image_path FROM listing_images li WHERE li.listing_id = ps.id AND li.item_type = 'supply' ORDER BY li.sort_order ASC, li.id ASC LIMIT 1) AS image_url
+            (SELECT li.image_path FROM listing_images li WHERE li.listing_id = ps.id AND li.item_type = 'supply' ORDER BY li.sort_order ASC, li.id ASC LIMIT 1) AS image_path_relative
         FROM
             pet_supplies ps
         ORDER BY
@@ -57,19 +64,25 @@ try {
                     $row['age'] = (int)$row['age'];
                 }
                 $row['price'] = (float)$row['price'];
-                
-                // Optionally prepend base URL to image_url if it's a relative path
-                // if ($row['image_url'] && strpos($row['image_url'], 'http') !== 0) {
-                //    $row['image_url'] = $imageBaseUrl . $row['image_url'];
-                // }
+
+                // Construct full image URL
+                if (!empty($row['image_path_relative'])) {
+                    $filename = basename($row['image_path_relative']); // e.g., image.jpg
+                    $row['image_url'] = $imageBaseUrl . $filename;
+                } else {
+                    $row['image_url'] = null;
+                }
+
+                unset($row['image_path_relative']); // Optionally remove raw path
 
                 $response['listings'][] = $row;
             }
+
             $response['success'] = true;
             $response['message'] = 'Listings fetched successfully.';
             http_response_code(200);
         } else {
-            $response['success'] = true; 
+            $response['success'] = true;
             $response['message'] = 'No listings found.';
             http_response_code(200);
         }
