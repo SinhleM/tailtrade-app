@@ -20,12 +20,12 @@ const TailTradeHomepage = () => {
     },
     {
       id: 2,
-      name: 'Bella',
+      name: 'Cat Scratching Post',
       type: 'Dog',
-      breed: 'French Bulldog',
-      price: 'R 2,500.00',
+      breed: 'Supply Item',
+      price: 'R 500.00',
       location: 'Cape Town',
-      image: '/images/list-frech-bull.webp (1).webp'
+      image: '/images/ihnatsi-catPost2.jpg'
     },
     {
       id: 3,
@@ -55,7 +55,7 @@ const TailTradeHomepage = () => {
     },
     {
       name: 'Labrador Retriever',
-      icon: '/images/icon-golden-retriever.webp (1).webp',
+      icon: '/images/ben-labrador.jpg',
       type: 'Labrador Dog'
     },
     {

@@ -1,5 +1,5 @@
 <?php
-require 'Database.php';
+require 'Database.php'; //
 
 $response = ['success' => false, 'listing' => null, 'uploader' => null, 'message' => ''];
 
@@ -86,7 +86,20 @@ try {
             $resultImg = $stmtImg->get_result();
             while ($imgRow = $resultImg->fetch_assoc()) {
                 if (!empty($imgRow['image_path'])) {
-                    $images[] = rtrim($imageBaseUrl, '/') . '/' . ltrim($imgRow['image_path'], '/');
+                    $imagePath = $imgRow['image_path'];
+                    
+                    // --- START OF FIX ---
+                    // Define the redundant path segment
+                    $redundantPathPrefix = 'uploads/listing_images/';
+                    // Check if $imagePath starts with the redundant prefix
+                    if (strpos($imagePath, $redundantPathPrefix) === 0) {
+                        // If it does, remove the redundant prefix from the start of $imagePath
+                        $imagePath = substr($imagePath, strlen($redundantPathPrefix));
+                    }
+                    // --- END OF FIX ---
+
+                    // Construct the full image URL
+                    $images[] = rtrim($imageBaseUrl, '/') . '/' . ltrim($imagePath, '/');
                 }
             }
             $stmtImg->close();
