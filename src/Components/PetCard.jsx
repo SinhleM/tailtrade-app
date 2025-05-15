@@ -15,11 +15,11 @@ const PetCard = ({ pet }) => {
     <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl flex flex-col h-full group transition-all duration-300 ease-in-out hover:scale-[1.03]">
       <div className="relative">
         {/* Added opacity transition */}
-        <img
-          src={pet.image}
-          alt={pet.name}
-          className="w-full h-48 object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-300"
-        />
+       <img 
+       src={pet.image} 
+       alt={pet.name} loading="lazy" 
+       className="w-full h-48 object-cover rounded-xl mb-4" />
+
         {/* Like Button Styling */}
         <button
           onClick={handleLikeClick}

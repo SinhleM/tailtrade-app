@@ -4,12 +4,23 @@ const PopularBreeds = ({ breeds }) => {
   return (
     <section className="py-12 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-2xl font-bold mb-8 text-center">POPULAR <span style={{ color: 'var(--color-primary)' }}>BREEDS</span></h2>
+        <h2 className="text-2xl font-bold mb-8 text-center">
+          POPULAR <span style={{ color: 'var(--color-primary)' }}>BREEDS</span>
+        </h2>
         <div className="flex flex-wrap justify-center gap-4 md:gap-8">
           {breeds.map((breed, index) => (
-            <a key={index}   href={`./Menu?search=${breed.name}`}  className="flex flex-col items-center group mx-4 p-2 rounded-lg hover:bg-orange-50 transition-colors">
+            <a
+              key={index}
+              href={`./Menu?search=${breed.name}`}
+              className="flex flex-col items-center group mx-4 p-2 rounded-lg hover:bg-orange-50 transition-colors"
+            >
               <div className="rounded-full overflow-hidden mb-2 border-2 border-gray-200 group-hover:border-orange-400 transition-colors">
-                <img src={breed.icon} alt={breed.name} className="w-16 h-16 md:w-20 md:h-20 object-cover" />
+                <img
+                  src={breed.icon}
+                  alt={breed.name}
+                  loading="lazy"
+                  className="w-16 h-16 md:w-20 md:h-20 object-cover"
+                />
               </div>
               <span className="text-sm font-medium text-gray-800">{breed.name}</span>
               <span className="text-xs text-gray-500">{breed.type}</span>
