@@ -6,7 +6,7 @@ const ListedPets = ({ pets }) => {
     <section id="listed-pets" className="py-12" style={{ backgroundColor: 'var(--color-primary)' }}>
       <div className="container mx-auto px-4">
         <h2 className="text-2xl font-bold mb-8 text-center text-white">
-          LISTED <span className="text-white">PETS</span>
+          FEATURED <span className="text-white">PETS</span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {pets.map(pet => (

@@ -610,7 +610,7 @@ const Menu = () => {
           </main>
         </div>
       </div>
-
+    <Footer/>
     </>
   );
 };

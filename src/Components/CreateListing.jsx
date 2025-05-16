@@ -16,11 +16,11 @@ const CreateListing = () => {
     location: '',
     description: '',
     // Pet Supply form fields
-    itemName: '', // Will be mapped to 'name' for supplies
+    itemName: '',
     condition: 'new',
-    itemPrice: '', // Will be mapped to 'price' for supplies
-    itemLocation: '', // Will be mapped to 'location' for supplies
-    itemDescription: '', // Will be mapped to 'description' for supplies
+    itemPrice: '',
+    itemLocation: '',
+    itemDescription: '',
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -80,7 +80,6 @@ const CreateListing = () => {
     const newFiles = [...selectedFiles, ...files].slice(0, 5); 
     setSelectedFiles(newFiles);
 
-    // Clean up old previews before creating new ones for the updated file list
     imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
     const newPreviews = newFiles.map(file => URL.createObjectURL(file));
     setImagePreviews(newPreviews);
@@ -88,24 +87,19 @@ const CreateListing = () => {
     if (newFiles.length > 0) {
         setErrors(prevErrors => ({ ...prevErrors, images: null }));
     }
-    if (e.target.files.length + selectedFiles.length > 5 && selectedFiles.length < 5) { // If trying to add more than allowed when not full
+    if (e.target.files.length + selectedFiles.length > 5 && selectedFiles.length < 5) {
          setErrors(prevErrors => ({ ...prevErrors, images: 'You can upload a maximum of 5 images. Some files were not added.' }));
     } else if (newFiles.length >= 5) {
-         setErrors(prevErrors => ({ ...prevErrors, images: null })); // Clear error if now at max or below
+         setErrors(prevErrors => ({ ...prevErrors, images: null }));
     }
-     // Reset the file input value to allow selecting the same file again if removed
      e.target.value = null;
   };
 
   const removeImage = (indexToRemove) => {
-    // Revoke object URL for the image being removed
     URL.revokeObjectURL(imagePreviews[indexToRemove]);
-
     setSelectedFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
     setImagePreviews(prevPreviews => prevPreviews.filter((_, index) => index !== indexToRemove));
-    
-    // Clear images error if any
-     setErrors(prevErrors => ({ ...prevErrors, images: null }));
+    setErrors(prevErrors => ({ ...prevErrors, images: null }));
   };
 
   const handleListingTypeChange = (e) => {
@@ -116,7 +110,6 @@ const CreateListing = () => {
         name: '', type: 'dog', breed: '', age: '', price: '', location: '', description: '',
         itemName: '', condition: 'new', itemPrice: '', itemLocation: '', itemDescription: '',
     });
-    // Clean up previews from previous type
     imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
     setSelectedFiles([]);
     setImagePreviews([]);
@@ -164,8 +157,46 @@ const CreateListing = () => {
         body: submissionData,
       });
       
-      const data = await response.json();
+      const responseText = await response.text(); // Get raw text first
+
+      if (!response.ok) {
+        // Server returned an error status (e.g., 400, 404, 500)
+        console.error(`Server error ${response.status}: ${response.statusText}`);
+        console.error("Raw server response:", responseText);
+        let errorMessage = `Server error: ${response.status}.`;
+        try {
+            // Attempt to parse the responseText as JSON, as our PHP script might send JSON errors
+            const errorData = JSON.parse(responseText);
+            if (errorData && errorData.message) {
+                errorMessage = errorData.message;
+            } else {
+                 errorMessage = `Server error ${response.status}: ${responseText.substring(0, 100)}...`; // Show snippet if not JSON
+            }
+        } catch (e) {
+            // If parsing fails, it means the error response was not JSON (e.g., HTML error page)
+            errorMessage = `Server returned non-JSON error. Status: ${response.status}. Check console for raw response.`;
+        }
+        setSubmitMessage({ type: 'error', message: errorMessage });
+        setIsSubmitting(false); // Ensure submission state is reset
+        return; // Stop further processing
+      }
+
+      // If response.ok is true, try to parse the text as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        console.error('Raw response text for successful (2xx) response:', responseText);
+        setSubmitMessage({
+          type: 'error',
+          message: 'Received malformed data from server despite a success status. Please try again.'
+        });
+        setIsSubmitting(false); // Ensure submission state is reset
+        return; // Stop further processing
+      }
       
+      // Proceed with data if parsing was successful
       if (data.success) {
         setSubmitMessage({
           type: 'success',
@@ -175,7 +206,7 @@ const CreateListing = () => {
             name: '', type: 'dog', breed: '', age: '', price: '', location: '', description: '',
             itemName: '', condition: 'new', itemPrice: '', itemLocation: '', itemDescription: '',
         });
-        imagePreviews.forEach(preview => URL.revokeObjectURL(preview)); // Clean up current previews
+        imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
         setSelectedFiles([]);
         setImagePreviews([]);
         setTimeout(() => {
@@ -184,31 +215,31 @@ const CreateListing = () => {
       } else {
         setSubmitMessage({
           type: 'error',
-          message: data.message || 'An error occurred'
+          message: data.message || 'An unspecified error occurred on the server.'
         });
       }
-    } catch (error) {
+    } catch (networkError) { // Catches network errors (e.g., server down, DNS issues)
       setSubmitMessage({
         type: 'error',
-        message: 'Server error or network issue. Please try again later.'
+        message: 'Network issue or server unreachable. Please check your connection and try again.'
       });
-      console.error('Error submitting form:', error);
+      console.error('Network error submitting form:', networkError);
     } finally {
       setIsSubmitting(false);
     }
   };
 
    useEffect(() => {
+    // Cleanup object URLs on component unmount
     return () => {
       imagePreviews.forEach(preview => URL.revokeObjectURL(preview));
     };
-  }, []); // Run only on unmount
+  }, [imagePreviews]); // Add imagePreviews to dependency array if it can change and needs cleanup
 
   if (!userData) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  // Simple scroll function for footer (if needed by Header/Footer)
   const scrollToSection = (sectionId) => (event) => {
     event.preventDefault();
     const section = document.getElementById(sectionId);
@@ -334,7 +365,6 @@ const CreateListing = () => {
                 </div>
               )}
               
-              {/* Image Upload Section */}
               <div>
                 <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-1.5">
                   Images (up to 5) <span className="text-red-500">*</span>
