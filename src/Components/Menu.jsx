@@ -1,31 +1,64 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Filter, X, ChevronDown, ChevronUp, AlertTriangle, ShoppingBag, Heart } from 'lucide-react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 
-// Menu component: Displays listings (pets and supplies) with filtering and sorting capabilities.
 const Menu = () => {
-  // Hooks for managing URL search parameters and navigation.
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // State for mobile filter panel visibility.
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  // State to store all fetched products/listings.
   const [allListings, setAllListings] = useState([]);
-  // State for loading status.
   const [loading, setLoading] = useState(true);
-  // State for error messages during data fetching.
   const [error, setError] = useState(null);
-  // State for the current search query term.
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
-  // --- Filter States ---
-  const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category') || 'all');
-  const [petTypeFilter, setPetTypeFilter] = useState(searchParams.get('petType') || 'all');
+  // --- New Filter States (using objects for checkbox selections) ---
+  const initialCategorySelection = () => {
+    const catParam = searchParams.get('category');
+    const initial = { pet: false, supply: false };
+    if (catParam) {
+      catParam.split(',').forEach(cat => {
+        if (cat in initial) initial[cat] = true;
+      });
+    }
+    return initial;
+  };
+  const [categorySelection, setCategorySelection] = useState(initialCategorySelection);
+
+  const initialPetTypeSelection = () => {
+    const petTypeParam = searchParams.get('petType');
+    const initial = { dog: false, cat: false }; // Add more pet types if needed
+    if (petTypeParam) {
+      petTypeParam.split(',').forEach(type => {
+        if (type in initial) initial[type] = true;
+      });
+    }
+    return initial;
+  };
+  const [petTypeSelection, setPetTypeSelection] = useState(initialPetTypeSelection);
+
+  // Define available conditions (excluding 'all' for checkbox keys)
+  const availableConditions = useMemo(() => ['new', 'like-new', 'good', 'fair', 'used'], []);
+
+  const initialSupplyConditionSelection = () => {
+    const conditionParam = searchParams.get('condition');
+    const initial = availableConditions.reduce((acc, cond) => {
+      acc[cond] = false;
+      return acc;
+    }, {});
+    if (conditionParam) {
+      conditionParam.split(',').forEach(cond => {
+        if (cond in initial) initial[cond] = true;
+      });
+    }
+    return initial;
+  };
+  const [supplyConditionSelection, setSupplyConditionSelection] = useState(initialSupplyConditionSelection);
+
+  // --- Existing Filter States (some may need adjustments in how they are reset) ---
   const [breedFilter, setBreedFilter] = useState(searchParams.get('breed') || 'all');
-  const [supplyConditionFilter, setSupplyConditionFilter] = useState(searchParams.get('condition') || 'all');
   const [sortBy, setSortBy] = useState(searchParams.get('sortBy') || 'newest');
   const [priceRange, setPriceRange] = useState([
     parseInt(searchParams.get('minPrice') || 0),
@@ -33,16 +66,12 @@ const Menu = () => {
   ]);
   const [locationFilter, setLocationFilter] = useState(searchParams.get('location') || 'all');
 
-  // State for favorites
   const [favorites, setFavorites] = useState(() => {
     const savedFavorites = localStorage.getItem('userFavorites');
     return savedFavorites ? new Set(JSON.parse(savedFavorites)) : new Set();
   });
-
-  // State for "Show Favorites" filter
   const [showFavoritesFilter, setShowFavoritesFilter] = useState(searchParams.get('showFavorites') === 'true' || false);
 
-  // State for collapsible sections in the filter panel.
   const [expandedSections, setExpandedSections] = useState({
     category: true,
     petFilters: true,
@@ -53,37 +82,28 @@ const Menu = () => {
     favoritesFilterSection: true
   });
 
-  // 2. Add a new state to track scroll position
   const [scrollPosition, setScrollPosition] = useState(0);
-
-  // 3. Add a ref for the header to measure its height
   const headerRef = useRef(null);
-
-  // 4. Add a state for image lazy loading
   const [visibleImages, setVisibleImages] = useState(new Set());
 
-
-  // Toggles the expansion state of a filter section.
   const toggleSection = (section) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // Effect to fetch listings from the backend when the component mounts.
   useEffect(() => {
     setLoading(true);
     setError(null);
     fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/Get_All_Listings.php')
       .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return response.json();
       })
       .then(data => {
         if (data.success) {
           const formattedData = data.listings.map(item => ({
             ...item,
-            category: item.listing_type,
+            category: item.listing_type, // 'pet' or 'supply'
+            type: item.type, // 'dog', 'cat' for pets
             date: new Date(item.created_at),
             price: parseFloat(item.price)
           }));
@@ -102,28 +122,35 @@ const Menu = () => {
       });
   }, []);
 
-  // Effect to update localStorage when favorites change
   useEffect(() => {
     localStorage.setItem('userFavorites', JSON.stringify(Array.from(favorites)));
   }, [favorites]);
 
-  // Effect to update the search query state when the URL 'search' parameter changes.
   useEffect(() => {
     setSearchQuery(searchParams.get('search') || '');
   }, [searchParams]);
 
-  // Effect to update URL search parameters whenever a filter state changes.
+  // Effect to update URL search parameters
   useEffect(() => {
     const params = new URLSearchParams();
     if (searchQuery) params.set('search', searchQuery);
-    if (categoryFilter !== 'all') params.set('category', categoryFilter);
 
-    if (categoryFilter === 'pet' || categoryFilter === 'all') {
-      if (petTypeFilter !== 'all') params.set('petType', petTypeFilter);
-      if (petTypeFilter !== 'all' && breedFilter !== 'all') params.set('breed', breedFilter);
+    const selectedCats = Object.entries(categorySelection).filter(([, v]) => v).map(([k]) => k);
+    if (selectedCats.length > 0) params.set('category', selectedCats.join(','));
+
+    const activeCategories = Object.keys(categorySelection).filter(key => categorySelection[key]);
+    const showPetSpecificFilters = categorySelection.pet || activeCategories.length === 0;
+    const showSupplySpecificFilters = categorySelection.supply || activeCategories.length === 0;
+
+    if (showPetSpecificFilters) {
+      const selectedPetTypes = Object.entries(petTypeSelection).filter(([, v]) => v).map(([k]) => k);
+      if (selectedPetTypes.length > 0) params.set('petType', selectedPetTypes.join(','));
+      if (selectedPetTypes.length === 1 && breedFilter !== 'all') params.set('breed', breedFilter); // Breed filter only if one pet type selected
     }
-    if (categoryFilter === 'supply' || categoryFilter === 'all') {
-      if (supplyConditionFilter !== 'all') params.set('condition', supplyConditionFilter);
+
+    if (showSupplySpecificFilters) {
+      const selectedConditions = Object.entries(supplyConditionSelection).filter(([, v]) => v).map(([k]) => k);
+      if (selectedConditions.length > 0) params.set('condition', selectedConditions.join(','));
     }
 
     if (sortBy !== 'newest') params.set('sortBy', sortBy);
@@ -133,21 +160,18 @@ const Menu = () => {
     if (showFavoritesFilter) params.set('showFavorites', 'true');
 
     setSearchParams(params, { replace: true });
-  }, [searchQuery, categoryFilter, petTypeFilter, breedFilter, supplyConditionFilter, sortBy, priceRange, locationFilter, showFavoritesFilter, setSearchParams]);
+  }, [
+    searchQuery, categorySelection, petTypeSelection, breedFilter,
+    supplyConditionSelection, sortBy, priceRange, locationFilter,
+    showFavoritesFilter, setSearchParams
+  ]);
 
-
-  // 5. Add a useEffect to handle scroll position and set up fixed sidebar
   useEffect(() => {
-    const handleScroll = () => {
-      setScrollPosition(window.scrollY);
-    };
+    const handleScroll = () => setScrollPosition(window.scrollY);
     window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Memoized calculation for filtered and sorted products.
   const processedListings = useMemo(() => {
     let listingsToProcess = [...allListings];
 
@@ -161,20 +185,23 @@ const Menu = () => {
         const inName = listing.name && listing.name.toLowerCase().includes(lowerSearchQuery);
         const inDescription = listing.description && listing.description.toLowerCase().includes(lowerSearchQuery);
         const inBreed = listing.breed && listing.breed.toLowerCase().includes(lowerSearchQuery);
-        const inType = listing.type && listing.type.toLowerCase().includes(lowerSearchQuery);
-        const inListingType = listing.listing_type && listing.listing_type.toLowerCase().includes(lowerSearchQuery);
+        const inType = listing.type && listing.type.toLowerCase().includes(lowerSearchQuery); // For pet type
+        const inListingType = listing.listing_type && listing.listing_type.toLowerCase().includes(lowerSearchQuery); // For category
         if (!(inName || inDescription || inBreed || inType || inListingType)) return false;
       }
 
-      if (categoryFilter !== 'all' && listing.category !== categoryFilter) return false;
+      const activeCatFilters = Object.keys(categorySelection).filter(key => categorySelection[key]);
+      if (activeCatFilters.length > 0 && !activeCatFilters.includes(listing.category)) return false;
 
       if (listing.category === 'pet') {
-        if (petTypeFilter !== 'all' && listing.type !== petTypeFilter) return false;
-        if (petTypeFilter !== 'all' && breedFilter !== 'all' && listing.breed !== breedFilter) return false;
+        const activePetTypeFilters = Object.keys(petTypeSelection).filter(key => petTypeSelection[key]);
+        if (activePetTypeFilters.length > 0 && !activePetTypeFilters.includes(listing.type)) return false;
+        if (activePetTypeFilters.length === 1 && breedFilter !== 'all' && listing.breed !== breedFilter) return false;
       }
 
       if (listing.category === 'supply') {
-        if (supplyConditionFilter !== 'all' && listing.condition !== supplyConditionFilter) return false;
+        const activeConditionFilters = Object.keys(supplyConditionSelection).filter(key => supplyConditionSelection[key]);
+        if (activeConditionFilters.length > 0 && !activeConditionFilters.includes(listing.condition)) return false;
       }
 
       if (listing.price < priceRange[0] || listing.price > priceRange[1]) return false;
@@ -192,10 +219,11 @@ const Menu = () => {
         default: return 0;
       }
     });
-  }, [allListings, searchQuery, categoryFilter, petTypeFilter, breedFilter, supplyConditionFilter, sortBy, priceRange, locationFilter, showFavoritesFilter, favorites]);
+  }, [
+    allListings, searchQuery, categorySelection, petTypeSelection, breedFilter,
+    supplyConditionSelection, sortBy, priceRange, locationFilter, showFavoritesFilter, favorites
+  ]);
 
-
-  // 6. Add useEffect for lazy loading images with Intersection Observer
   useEffect(() => {
     const imgObserver = new IntersectionObserver(
       (entries) => {
@@ -207,44 +235,51 @@ const Menu = () => {
           }
         });
       },
-      { rootMargin: '200px' } // Start loading images when they're within 200px of viewport
+      { rootMargin: '200px' }
     );
+    document.querySelectorAll('.lazy-image-container').forEach(img => imgObserver.observe(img));
+    return () => imgObserver.disconnect();
+  }, [processedListings]);
 
-    // Observe all image containers
-    document.querySelectorAll('.lazy-image-container').forEach(img => {
-      imgObserver.observe(img);
-    });
-
-    return () => {
-      imgObserver.disconnect();
-    };
-  }, [processedListings]); // Re-run when listings change to observe new images
-
-
-  // Function to toggle favorite status
   const toggleFavorite = (listingId) => {
     setFavorites(prevFavorites => {
       const newFavorites = new Set(prevFavorites);
-      if (newFavorites.has(listingId)) {
-        newFavorites.delete(listingId);
-      } else {
-        newFavorites.add(listingId);
-      }
+      if (newFavorites.has(listingId)) newFavorites.delete(listingId);
+      else newFavorites.add(listingId);
       return newFavorites;
     });
   };
 
-
-  // --- Dynamic options for filters ---
   const locations = useMemo(() => ['all', ...new Set(allListings.map(p => p.location).filter(Boolean))], [allListings]);
+
   const breeds = useMemo(() => {
-    if (petTypeFilter === 'all') return ['all'];
-    return ['all', ...new Set(allListings.filter(p => p.category === 'pet' && p.type === petTypeFilter).map(p => p.breed).filter(Boolean))];
-  }, [allListings, petTypeFilter]);
-  const conditions = useMemo(() => ['all', 'new', 'like-new', 'good', 'fair', 'used'], []);
+    const selectedPetTypes = Object.keys(petTypeSelection).filter(pt => petTypeSelection[pt]);
+    if (selectedPetTypes.length === 1) {
+      const currentPetType = selectedPetTypes[0];
+      return ['all', ...new Set(allListings
+        .filter(p => p.category === 'pet' && p.type === currentPetType && p.breed)
+        .map(p => p.breed)
+      )];
+    }
+    return ['all'];
+  }, [allListings, petTypeSelection]);
+
+  // Effect to reset breedFilter if petTypeSelection changes invalidating current breed, or if breeds list changes
+   useEffect(() => {
+    const selectedPetTypes = Object.keys(petTypeSelection).filter(pt => petTypeSelection[pt]);
+    const currentBreedsList = breeds; // Get the current list based on petTypeSelection
+
+    if (selectedPetTypes.length !== 1 && breedFilter !== 'all') {
+        setBreedFilter('all');
+    } else if (selectedPetTypes.length === 1 && !currentBreedsList.includes(breedFilter)) {
+        setBreedFilter('all');
+    }
+  }, [petTypeSelection, breedFilter, breeds]); // breeds itself is derived from allListings & petTypeSelection
+
+  // Static list for supply conditions for UI mapping (keys are in availableConditions)
+  const supplyConditionOptions = useMemo(() => ['new', 'like-new', 'good', 'fair', 'used'], []);
 
 
-  // Handlers for filter changes
   const handlePriceRangeChange = (e, index) => {
     const value = parseInt(e.target.value, 10);
     const newRange = [...priceRange];
@@ -256,9 +291,22 @@ const Menu = () => {
 
   const toggleMobileFilter = () => setIsMobileFilterOpen(!isMobileFilterOpen);
 
+  const activeCategoriesForVisibility = Object.keys(categorySelection).filter(key => categorySelection[key]);
+  const showPetFiltersSection = categorySelection.pet || activeCategoriesForVisibility.length === 0;
+  const showSupplyFiltersSection = categorySelection.supply || activeCategoriesForVisibility.length === 0;
+
+  // Function to reset all pet type selections
+  const resetPetTypeSelection = () => {
+    setPetTypeSelection(prev => Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}));
+  };
+
+  // Function to reset all supply condition selections
+  const resetSupplyConditionSelection = () => {
+    setSupplyConditionSelection(prev => Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}));
+  };
+
   return (
     <>
-      {/* 8. Modify the Header component reference to capture its height with ref */}
       <Header ref={headerRef} />
       <div className="container mx-auto px-4 py-8 font-inter">
         <div className="flex justify-between items-center mb-6">
@@ -276,7 +324,6 @@ const Menu = () => {
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">
-          {/* 7. Replace the existing aside element with this fixed sidebar implementation */}
           <aside className={`${isMobileFilterOpen ? 'fixed inset-0 z-40 overflow-y-auto bg-white p-6 w-full' : 'hidden'} md:block md:relative md:w-72 md:z-30`}>
             <div
               className={`md:sticky transition-all duration-200 overflow-y-auto`}
@@ -285,7 +332,6 @@ const Menu = () => {
                 maxHeight: `calc(100vh - ${scrollPosition > (headerRef.current?.offsetHeight || 0) ? '2rem' : `${(headerRef.current?.offsetHeight || 0) + 32}px`})`
               }}
             >
-              {/* Existing sidebar content */}
               {isMobileFilterOpen && (
                 <div className="flex justify-between items-center md:hidden mb-6 pb-4 border-b border-gray-200">
                   <h3 className="text-2xl font-semibold text-gray-700">Filters</h3>
@@ -301,25 +347,26 @@ const Menu = () => {
                   Category {expandedSections.category ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </h3>
                 {expandedSections.category && (
-                  <div className="flex flex-wrap gap-2">
-                    {['all', 'pet', 'supply'].map(cat => (
-                      <label key={cat} className="cursor-pointer">
+                  <div className="space-y-1">
+                    {['pet', 'supply'].map(cat => (
+                      <label key={cat} className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-100 rounded-md transition-colors">
                         <input
-                          type="radio"
-                          name="category"
-                          value={cat}
-                          checked={categoryFilter === cat}
+                          type="checkbox"
+                          checked={categorySelection[cat] || false}
                           onChange={(e) => {
-                            setCategoryFilter(e.target.value);
-                            setPetTypeFilter('all');
-                            setBreedFilter('all');
-                            setSupplyConditionFilter('all');
+                            const newSelection = { ...categorySelection, [cat]: e.target.checked };
+                            setCategorySelection(newSelection);
+                            if (cat === 'pet' && !e.target.checked) {
+                              resetPetTypeSelection(); // Reset pet types
+                              setBreedFilter('all');   // Reset breed
+                            }
+                            if (cat === 'supply' && !e.target.checked) {
+                              resetSupplyConditionSelection(); // Reset conditions
+                            }
                           }}
-                          className="peer hidden"
+                          className="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-300 focus:ring-orange-400 focus:ring-offset-0 transition-colors"
                         />
-                        <div className="px-3 py-1 rounded-full text-sm border border-gray-300 text-gray-600 peer-checked:bg-orange-500 peer-checked:text-white hover:bg-orange-100 transition-all">
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        </div>
+                        <span className="text-sm text-gray-700">{cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
                       </label>
                     ))}
                   </div>
@@ -332,20 +379,20 @@ const Menu = () => {
                   Filter by Favorites {expandedSections.favoritesFilterSection ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </h3>
                 {expandedSections.favoritesFilterSection && (
-                  <label className="flex items-center space-x-2 cursor-pointer p-2 hover:bg-gray-100 rounded-md">
+                  <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-100 rounded-md transition-colors">
                     <input
                       type="checkbox"
                       checked={showFavoritesFilter}
                       onChange={(e) => setShowFavoritesFilter(e.target.checked)}
                       className="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-300 focus:ring-orange-400 focus:ring-offset-0"
                     />
-                    <span className="text-sm text-gray-600">Show Only My Favorites</span>
+                    <span className="text-sm text-gray-700">Show Only My Favorites</span>
                   </label>
                 )}
               </div>
 
               {/* Pet Filters */}
-              {(categoryFilter === 'pet' || categoryFilter === 'all') && (
+              {showPetFiltersSection && (
                 <div className="mb-6 pb-4 border-b border-gray-200">
                   <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('petFilters')}>
                     Pet Filters {expandedSections.petFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -354,28 +401,33 @@ const Menu = () => {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-500 mb-2">Pet Type</label>
-                        <div className="flex flex-wrap gap-2">
-                          {['all', 'dog', 'cat'].map(type => (
-                            <label key={type} className="cursor-pointer">
+                        <div className="space-y-1">
+                          {Object.keys(petTypeSelection).map(type => (
+                            <label key={type} className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-100 rounded-md transition-colors">
                               <input
-                                type="radio"
-                                name="petType"
-                                value={type}
-                                checked={petTypeFilter === type}
-                                onChange={(e) => { setPetTypeFilter(e.target.value); setBreedFilter('all'); }}
-                                className="peer hidden"
+                                type="checkbox"
+                                checked={petTypeSelection[type] || false}
+                                onChange={(e) => {
+                                  setPetTypeSelection(prev => ({ ...prev, [type]: e.target.checked }));
+                                  // Breed filter reset is handled by the useEffect watching petTypeSelection & breeds
+                                }}
+                                className="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-300 focus:ring-orange-400 focus:ring-offset-0 transition-colors"
                               />
-                              <div className="px-3 py-1 rounded-full text-sm border border-gray-300 text-gray-600 peer-checked:bg-orange-500 peer-checked:text-white hover:bg-orange-100 transition-all">
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                              </div>
+                              <span className="text-sm text-gray-700">{type.charAt(0).toUpperCase() + type.slice(1)}</span>
                             </label>
                           ))}
                         </div>
                       </div>
-                      {petTypeFilter !== 'all' && breeds.length > 1 && (
+                      { (Object.values(petTypeSelection).filter(v => v).length === 1 || breeds.length > 1) && breeds.length > 1 && (
                         <div>
                           <label htmlFor="breedFilter" className="block text-sm font-medium text-gray-500 mb-1">Breed</label>
-                          <select id="breedFilter" value={breedFilter} onChange={(e) => setBreedFilter(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500">
+                          <select
+                            id="breedFilter"
+                            value={breedFilter}
+                            onChange={(e) => setBreedFilter(e.target.value)}
+                            className="w-full p-2 border border-gray-300 rounded-md shadow-sm text-sm focus:ring-orange-500 focus:border-orange-500"
+                            disabled={Object.values(petTypeSelection).filter(v => v).length !== 1} // Disable if not exactly one pet type selected
+                          >
                             {breeds.map(breed => <option key={breed} value={breed}>{breed.charAt(0).toUpperCase() + breed.slice(1)}</option>)}
                           </select>
                         </div>
@@ -386,7 +438,7 @@ const Menu = () => {
               )}
 
               {/* Supply Filters */}
-              {(categoryFilter === 'supply' || categoryFilter === 'all') && (
+              {showSupplyFiltersSection && (
                 <div className="mb-6 pb-4 border-b border-gray-200">
                   <h3 className="text-lg font-semibold mb-3 text-gray-700 cursor-pointer flex justify-between items-center" onClick={() => toggleSection('supplyFilters')}>
                     Supply Filters {expandedSections.supplyFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -394,20 +446,18 @@ const Menu = () => {
                   {expandedSections.supplyFilters && (
                     <div>
                       <label className="block text-sm font-medium text-gray-500 mb-2">Condition</label>
-                      <div className="flex flex-wrap gap-2">
-                        {conditions.map(cond => (
-                          <label key={cond} className="cursor-pointer">
+                      <div className="space-y-1">
+                        {supplyConditionOptions.map(cond => (
+                          <label key={cond} className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-100 rounded-md transition-colors">
                             <input
-                              type="radio"
-                              name="supplyCondition"
-                              value={cond}
-                              checked={supplyConditionFilter === cond}
-                              onChange={(e) => setSupplyConditionFilter(e.target.value)}
-                              className="peer hidden"
+                              type="checkbox"
+                              checked={supplyConditionSelection[cond] || false}
+                              onChange={(e) => {
+                                setSupplyConditionSelection(prev => ({...prev, [cond]: e.target.checked}));
+                              }}
+                              className="form-checkbox h-5 w-5 text-orange-500 rounded border-gray-300 focus:ring-orange-400 focus:ring-offset-0 transition-colors"
                             />
-                            <div className="px-3 py-1 rounded-full text-sm border border-gray-300 text-gray-600 peer-checked:bg-orange-500 peer-checked:text-white hover:bg-orange-100 transition-all">
-                              {cond.charAt(0).toUpperCase() + cond.slice(1).replace('-', ' ')}
-                            </div>
+                            <span className="text-sm text-gray-700">{cond.charAt(0).toUpperCase() + cond.slice(1).replace('-', ' ')}</span>
                           </label>
                         ))}
                       </div>
@@ -507,10 +557,10 @@ const Menu = () => {
                     <button
                       onClick={() => {
                         setSearchQuery('');
-                        setCategoryFilter('all');
-                        setPetTypeFilter('all');
+                        setCategorySelection({ pet: false, supply: false });
+                        setPetTypeSelection({ dog: false, cat: false });
                         setBreedFilter('all');
-                        setSupplyConditionFilter('all');
+                        setSupplyConditionSelection(availableConditions.reduce((acc, cond) => ({ ...acc, [cond]: false }), {}));
                         setPriceRange([0, 50000]);
                         setLocationFilter('all');
                         setSortBy('newest');
@@ -529,7 +579,6 @@ const Menu = () => {
                         key={listing.id + listing.listing_type}
                         className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ease-in-out flex flex-col bg-white group"
                       >
-                        {/* 9. Update the image rendering in the listings grid to support lazy loading */}
                         <div
                           className="h-40 sm:h-56 relative overflow-hidden cursor-pointer"
                           onClick={() => navigate(`/listing/${listing.listing_type}/${listing.id}`)}
@@ -544,7 +593,7 @@ const Menu = () => {
                                 alt={listing.name}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                                 onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/400x320/E2E8F0/AAAAAA?text=Image+Not+Found`; }}
-                                loading="lazy" /* Native lazy loading as a fallback */
+                                loading="lazy"
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-gray-200">
@@ -616,4 +665,3 @@ const Menu = () => {
 };
 
 export default Menu;
-
