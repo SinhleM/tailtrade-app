@@ -1,11 +1,11 @@
 <?php
-require 'Database.php'; //
+require 'Database.php';
 
 $response = ['success' => false, 'listing' => null, 'uploader' => null, 'message' => ''];
 
 // --- DEFINE STATIC BASE URL TO MATCH IMAGE PATH ---
 $imageBaseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://");
-$imageBaseUrl .= $_SERVER['HTTP_HOST'] . '/PET-C2C-PROJECT/TailTrade/Backend/uploads/listing_images/';
+$imageBaseUrl .= $_SERVER['HTTP_HOST'] . '/PET-C2C-PROJECT/TailTrade/Backend/uploads/listing_images/'; // Adjust this path if your project structure is different
 
 $listing_type_raw = isset($_GET['type']) ? $_GET['type'] : null;
 $listing_id_raw = isset($_GET['id']) ? $_GET['id'] : null;
@@ -27,6 +27,8 @@ $listing_id = (int)$listing_id_raw;
 
 try {
     $sql = "";
+    // Ensure owner_id is selected from the primary table (pets or pet_supplies)
+    // to be used as the uploader's ID.
     $user_fields = "u.name AS uploader_name, u.email AS uploader_email";
 
     if ($listing_type === 'pet') {
@@ -47,7 +49,7 @@ try {
     if ($stmt === false) {
         $response['message'] = 'Database prepare statement failed: ' . htmlspecialchars($conn->error);
         http_response_code(500);
-        error_log('SQL Prepare Error: ' . $conn->error);
+        error_log('SQL Prepare Error in Get_Listing_Details.php: ' . $conn->error);
         echo json_encode($response);
         exit();
     }
@@ -88,17 +90,10 @@ try {
                 if (!empty($imgRow['image_path'])) {
                     $imagePath = $imgRow['image_path'];
                     
-                    // --- START OF FIX ---
-                    // Define the redundant path segment
                     $redundantPathPrefix = 'uploads/listing_images/';
-                    // Check if $imagePath starts with the redundant prefix
                     if (strpos($imagePath, $redundantPathPrefix) === 0) {
-                        // If it does, remove the redundant prefix from the start of $imagePath
                         $imagePath = substr($imagePath, strlen($redundantPathPrefix));
                     }
-                    // --- END OF FIX ---
-
-                    // Construct the full image URL
                     $images[] = rtrim($imageBaseUrl, '/') . '/' . ltrim($imagePath, '/');
                 }
             }
@@ -106,7 +101,15 @@ try {
         }
         $response['listing']['images'] = $images;
 
-        $response['uploader'] = ['name' => $data['uploader_name'], 'email' => $data['uploader_email']];
+        // *** MODIFICATION START ***
+        // Add the uploader's ID (which is the owner_id of the listing) to the uploader object.
+        // The $data['owner_id'] comes from the main query (p.owner_id or ps.owner_id).
+        $response['uploader'] = [
+            'id' => (int)$data['owner_id'], // This is the crucial addition
+            'name' => $data['uploader_name'], 
+            'email' => $data['uploader_email']
+        ];
+        // *** MODIFICATION END ***
         
         $response['success'] = true;
         $response['message'] = 'Listing details fetched successfully.';
@@ -120,7 +123,7 @@ try {
 } catch (Exception $e) {
     $response['message'] = 'An unexpected error occurred: ' . htmlspecialchars($e->getMessage());
     http_response_code(500); 
-    error_log('Exception in get_listing_detail.php: ' . $e->getMessage());
+    error_log('Exception in Get_Listing_Details.php: ' . $e->getMessage());
 }
 
 $conn->close();

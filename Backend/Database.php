@@ -1,31 +1,27 @@
 <?php
-
-header("Access-Control-Allow-Origin: *");
-
+// Ensure CORS headers are set correctly and early
+header("Access-Control-Allow-Origin: *"); // Allows requests from any origin
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
 
-
-
-// --- Handle OPTIONS request (pre-flight) ---
+// Handle OPTIONS pre-flight request
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// --- Database Configuration ---
+// Database Configuration
 $dbHost = 'localhost'; // Usually localhost for XAMPP
-$dbUser = 'root';      // Default XAMPP username (change if you have a different one)
-$dbPass = '';          // Default XAMPP password (change if you set one)
-$dbName = 'tailtrade_db'; // Your database name [cite: 1]
+$dbUser = 'root';      // Default XAMPP username
+$dbPass = '';          // Default XAMPP password
+$dbName = 'tailtrade_db'; // Your database name
 
-// --- Create Connection ---
+// Create Connection
 $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 
-// --- Check Connection ---
+// Check Connection
 if ($conn->connect_error) {
-
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database Connection Error: ' . $conn->connect_error]);
     exit(); // Stop script execution if connection fails
