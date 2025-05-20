@@ -7,7 +7,8 @@ import Menu from './Components/Menu.jsx';
 import ListingDetail from './Components/ListingDetails.jsx';
 import CreateListing from './Components/CreateListing.jsx';
 import MessagingPage from './Components/MessagingPage.jsx';
-import ProtectedRoute from './Components/ProtectedRoute.jsx'; // Import the ProtectedRoute component
+import ProtectedRoute from './Components/ProtectedRoute.jsx';
+import Dashboard from './Components/Dashboard.jsx';
 import './App.css';
 
 function App() {
@@ -26,9 +27,10 @@ function App() {
             <Route path="/Menu" element={<Menu />} />
             <Route path="/listing/:listingType/:listingId" element={<ListingDetail />} />
             <Route path="/messagingPage" element={<MessagingPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
           </Route>
 
-          {/* Redirect any unmatched routes to home */}
+          
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
