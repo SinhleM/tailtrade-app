@@ -6,30 +6,46 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
     const [loggedInUserId, setLoggedInUserId] = useState(null);
     const [authLoading, setAuthLoading] = useState(true); // To handle initial check
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Add explicit authenticated state
 
-    // Simulate checking for a logged-in user (e.g., from localStorage or an API call)
+    // Check for authenticated user on initial load
     useEffect(() => {
-        // In a real app, you'd check localStorage for a token/user ID,
-        // or make an API call to verify session.
-        const storedUserId = localStorage.getItem('loggedInUserId');
-        if (storedUserId) {
-            setLoggedInUserId(parseInt(storedUserId, 10));
-        }
-        setAuthLoading(false); // Finished checking
+        const checkAuthStatus = () => {
+            const storedUserId = localStorage.getItem('loggedInUserId');
+            if (storedUserId) {
+                setLoggedInUserId(parseInt(storedUserId, 10));
+                setIsAuthenticated(true);
+            } else {
+                setLoggedInUserId(null);
+                setIsAuthenticated(false);
+            }
+            setAuthLoading(false);
+        };
+        
+        checkAuthStatus();
     }, []);
 
     const login = (userId) => {
         setLoggedInUserId(userId);
-        localStorage.setItem('loggedInUserId', userId.toString()); // Persist for demo
+        setIsAuthenticated(true);
+        localStorage.setItem('loggedInUserId', userId.toString());
     };
 
     const logout = () => {
         setLoggedInUserId(null);
+        setIsAuthenticated(false);
         localStorage.removeItem('loggedInUserId');
+        localStorage.removeItem('fullUser'); // Also clear the full user data
     };
 
     return (
-        <AuthContext.Provider value={{ loggedInUserId, login, logout, authLoading }}>
+        <AuthContext.Provider value={{ 
+            loggedInUserId, 
+            login, 
+            logout, 
+            authLoading,
+            isAuthenticated // Explicitly export authentication state
+        }}>
             {children}
         </AuthContext.Provider>
     );
