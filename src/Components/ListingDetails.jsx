@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from './Header'; // Assuming Header and Footer are in the same directory
 import Footer from './Footer';
-import { 
-  User, MapPin, Tag, CalendarDays, Info, AlertTriangle, 
-  ShoppingBag, MessageSquare, ChevronLeft, ChevronRight, 
-  Flag, CheckCircle2, Send, XCircle, Check 
+import {
+  User, MapPin, Tag, CalendarDays, Info, AlertTriangle,
+  ShoppingBag, MessageSquare, ChevronLeft, ChevronRight,
+  Flag, CheckCircle2, Send, XCircle, Check
 } from 'lucide-react';
 import { useAuth } from '../AuthContext'; // Adjusted path: Assumes AuthContext.jsx is in src/
 
@@ -44,7 +44,7 @@ const ListingDetail = () => {
         setReportReason('');
         setShowMarkSoldConfirm(false);
 
-        fetch(`${apiBaseUrl}/Get_Listing_Details.php?type=${listingType}&id=${listingId}`)
+        fetch(`${apiBaseUrl}/Get_Listing_Details.php?type=${listingType}&id=${listingId}`) //
             .then(response => {
                 if (!response.ok) {
                     return response.json().then(errData => {
@@ -103,11 +103,11 @@ const ListingDetail = () => {
     const handleToggleReportInput = () => {
         const newShowState = !showReportInput;
         setShowReportInput(newShowState);
-        if (!newShowState || showReportInput) { 
+        if (!newShowState || showReportInput) {
             setReportReason('');
         }
-        setShowMarkSoldConfirm(false); 
-        setActionMessage({ text: '', type: '' }); 
+        setShowMarkSoldConfirm(false);
+        setActionMessage({ text: '', type: '' });
     };
 
     const handleSubmitReport = async () => {
@@ -115,7 +115,7 @@ const ListingDetail = () => {
             setActionMessage({ text: 'A reason is required to report this listing.', type: 'error' });
             return;
         }
-        if (!listing || !loggedInUserId) { 
+        if (!listing || !loggedInUserId) {
              setActionMessage({ text: 'Cannot submit report: missing data or not logged in.', type: 'error' });
             return;
         }
@@ -123,21 +123,22 @@ const ListingDetail = () => {
         setIsProcessingReport(true);
         setActionMessage({ text: 'Submitting report...', type: 'info' });
         try {
-            const response = await fetch(`${apiBaseUrl}/Report_Listing.php`, { 
+            const response = await fetch(`${apiBaseUrl}/Admin/Handle_Flagged_Content.php`, { // MODIFIED URL
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    listingId: listing.id,
-                    listingType: listing.listing_type,
-                    reporterId: loggedInUserId, 
-                    reason: reportReason.trim(), 
+                body: JSON.stringify({ // MODIFIED PAYLOAD
+                    itemId: listing.id,
+                    itemType: listing.listing_type,
+                    reporterId: loggedInUserId,
+                    reason: reportReason.trim(),
+                    action: 'submit_report' // Action for backend to identify the task
                 }),
             });
             const result = await response.json();
             if (result.success) {
                 setActionMessage({ text: result.message || 'Listing reported successfully. Thank you.', type: 'success' });
-                setShowReportInput(false); 
-                setReportReason('');    
+                setShowReportInput(false);
+                setReportReason('');
             } else {
                 setActionMessage({ text: result.message || 'Failed to report listing.', type: 'error' });
             }
@@ -151,8 +152,8 @@ const ListingDetail = () => {
 
     const handleShowMarkSoldConfirm = () => {
         setShowMarkSoldConfirm(true);
-        setShowReportInput(false); 
-        setActionMessage({ text: '', type: '' }); 
+        setShowReportInput(false);
+        setActionMessage({ text: '', type: '' });
     };
 
     const handleCancelMarkSold = () => {
@@ -160,28 +161,34 @@ const ListingDetail = () => {
     };
 
     const handleConfirmMarkAsSold = async () => {
-        if (!listing || !loggedInUserId) { 
+        if (!listing || !loggedInUserId) {
             setActionMessage({ text: 'Cannot mark as sold: missing data or not logged in.', type: 'error' });
+            return;
+        }
+
+        // Frontend check to ensure the user owns the listing
+        if (uploader && uploader.id !== loggedInUserId) {
+            setActionMessage({ text: 'You can only mark your own listings as sold.', type: 'error' });
             return;
         }
 
         setIsProcessingMarkSold(true);
         setActionMessage({ text: 'Updating status to sold...', type: 'info' });
         try {
-            const response = await fetch(`${apiBaseUrl}/Mark_Listing_Sold.php`, { 
+            const response = await fetch(`${apiBaseUrl}/Admin/Update_Listing_Status.php`, { // MODIFIED URL
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+                body: JSON.stringify({ // MODIFIED PAYLOAD
                     listingId: listing.id,
                     listingType: listing.listing_type,
-                    ownerId: loggedInUserId, 
+                    status: 'sold'
                 }),
             });
             const result = await response.json();
             if (result.success) {
                 setActionMessage({ text: result.message || 'Listing marked as sold successfully!', type: 'success' });
                 setListing(prevListing => ({ ...prevListing, status: 'sold' }));
-                setShowMarkSoldConfirm(false); 
+                setShowMarkSoldConfirm(false);
             } else {
                 setActionMessage({ text: result.message || 'Failed to mark listing as sold.', type: 'error' });
             }
@@ -208,7 +215,7 @@ const ListingDetail = () => {
         }
     };
     const imageLoadError = (e) => {
-        e.target.onerror = null; 
+        e.target.onerror = null;
         e.target.src = `https://placehold.co/800x600/FECACA/B91C1C?text=Image+Not+Available&font=Lato`;
     };
     const scrollToSection = (sectionId) => (event) => {
@@ -265,9 +272,9 @@ const ListingDetail = () => {
     const isPet = listing.listing_type === 'pet';
     const placeholderImage = `https://placehold.co/800x600/E2E8F0/718096?text=${encodeURIComponent(listing.name?.split(' ').slice(0,2).join(' ') || 'Listing')}&font=Lato`;
     const currentImage = listing.images && listing.images.length > 0
-        ? listing.images[currentImageIndex] 
+        ? listing.images[currentImageIndex]
         : placeholderImage;
-    
+
     const isOwner = uploader && loggedInUserId && uploader.id === loggedInUserId;
     const isSold = listing && listing.status === 'sold';
 
@@ -303,7 +310,7 @@ const ListingDetail = () => {
                             <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3 break-words">{listing.name}</h1>
                              {isSold && ( <span className="inline-block bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full mb-2 uppercase tracking-wider">Sold</span> )}
                             <div className="text-3xl font-semibold mb-6" style={{ color: 'var(--color-primary)' }}>R {parseFloat(listing.price).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                            
+
                             <div className="space-y-3 text-gray-700 mb-6 text-base">
                                 <div className="flex items-start"><MapPin size={20} className="mr-3 mt-1 flex-shrink-0" style={{ color: 'var(--color-primary)' }} /><div><span className="font-medium">Location:</span> {listing.location}</div></div>
                                 {isPet && (<>
@@ -344,7 +351,7 @@ const ListingDetail = () => {
                                                 {!showMarkSoldConfirm ? (
                                                     <button
                                                         className="w-full px-4 py-2.5 rounded-md text-white font-semibold shadow-sm hover:opacity-90 focus:outline-none transition-all flex items-center justify-center text-sm"
-                                                        style={{ backgroundColor: '#22c55e' }} 
+                                                        style={{ backgroundColor: '#22c55e' }}
                                                         onClick={handleShowMarkSoldConfirm}
                                                         disabled={authLoading || isProcessingMarkSold}
                                                     >
@@ -373,7 +380,7 @@ const ListingDetail = () => {
                                                 )}
                                             </div>
                                         )}
-                                        
+
                                         {!isOwner && loggedInUserId && !isSold && (
                                              <div className="border border-gray-200 rounded-md">
                                                 {!showReportInput ? (
@@ -385,7 +392,6 @@ const ListingDetail = () => {
                                                         <Flag size={18} className="mr-2" /> Report Listing
                                                     </button>
                                                 ) : (
-                                                    // This is the "message box" area for reporting
                                                     <div className="p-3 bg-gray-50 rounded-md">
                                                         <p className="text-xs text-gray-700 mb-1">Please provide a reason for reporting:</p>
                                                         <textarea
@@ -395,7 +401,6 @@ const ListingDetail = () => {
                                                             className="w-full p-2 border border-gray-300 rounded-md mb-2 text-xs focus:ring-orange-500 focus:border-orange-500"
                                                             rows="3"
                                                         ></textarea>
-                                                        {/* This div now correctly contains BOTH Submit and Cancel buttons for the report */}
                                                         <div className="flex space-x-2">
                                                             <button
                                                                 onClick={handleSubmitReport}
@@ -405,7 +410,7 @@ const ListingDetail = () => {
                                                                 <Send size={16} className="mr-1"/> {isProcessingReport ? 'Submitting...' : 'Submit Report'}
                                                             </button>
                                                             <button
-                                                                onClick={handleToggleReportInput} // This correctly calls the toggle function to cancel/hide
+                                                                onClick={handleToggleReportInput}
                                                                 className="flex-1 px-3 py-1.5 bg-gray-300 text-gray-700 text-xs rounded-md hover:bg-gray-400 disabled:opacity-50 flex items-center justify-center"
                                                                 disabled={isProcessingReport}
                                                             >

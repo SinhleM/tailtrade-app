@@ -1,5 +1,5 @@
 <?php
-require 'Database.php'; // This includes CORS headers and DB connection
+require '../Database.php'; // This includes CORS headers and DB connection
 
 // Response structure
 $response = ['success' => false, 'sold' => [], 'message' => ''];

@@ -1,5 +1,5 @@
 <?php
-require 'Database.php'; // This includes CORS headers and DB connection
+require '../Database.php'; // This includes CORS headers and DB connection
 
 // Get input data
 $input = json_decode(file_get_contents('php://input'), true);
