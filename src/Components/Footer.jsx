@@ -41,7 +41,7 @@ const Footer = ({ scrollToSection }) => {
               </li>
               <li>
                 <a
-                  href="#listed-pets"
+                  href="Mhttp://localhost:5173/Menu"
                   onClick={(e) => {
                     e.preventDefault();
                     handleScroll('listed-pets');
