@@ -95,7 +95,7 @@ const Menu = () => {
     setError(null);
     fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/Get_All_Listings.php')
       .then(response => {
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) throw new new Error(`HTTP error! status: ${response.status}`);
         return response.json();
       })
       .then(data => {
@@ -225,21 +225,26 @@ const Menu = () => {
   ]);
 
   useEffect(() => {
+    // Re-observe images whenever processedListings changes or component mounts
     const imgObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             const imageId = entry.target.dataset.imageId;
             setVisibleImages(prev => new Set(prev).add(imageId));
-            imgObserver.unobserve(entry.target);
+            imgObserver.unobserve(entry.target); // Stop observing once image is visible
           }
         });
       },
-      { rootMargin: '200px' }
+      { rootMargin: '200px' } // Load images when they are 200px from viewport
     );
+
+    // Observe all lazy-image-container elements
     document.querySelectorAll('.lazy-image-container').forEach(img => imgObserver.observe(img));
+
+    // Cleanup observer on component unmount or processedListings change
     return () => imgObserver.disconnect();
-  }, [processedListings]);
+  }, [processedListings]); // Depend on processedListings to re-observe new elements if filters change
 
   const toggleFavorite = (listingId) => {
     setFavorites(prevFavorites => {
@@ -584,7 +589,7 @@ const Menu = () => {
                           onClick={() => navigate(`/listing/${listing.listing_type}/${listing.id}`)}
                         >
                           <div
-                            className="w-full h-full bg-gray-100 lazy-image-container"
+                            className="w-full h-full bg-gray-100 lazy-image-container flex items-center justify-center" // Added flex for centering placeholder
                             data-image-id={`${listing.id}-${listing.listing_type}`}
                           >
                             {visibleImages.has(`${listing.id}-${listing.listing_type}`) ? (
@@ -592,12 +597,13 @@ const Menu = () => {
                                 src={listing.image_url || `https://placehold.co/400x320/E2E8F0/AAAAAA?text=${listing.name.split(' ')[0]}`}
                                 alt={listing.name}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/400x320/E2E8F0/AAAAAA?text=Image+Not+Found`; }}
-                                loading="lazy"
+                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://placehold.co/400x320/E2E8F0/AAAAAA?text=Image+Not+Found'; }}
+                                loading="lazy" // Already present, good for explicit lazy loading
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                <div className="animate-pulse rounded-md bg-gray-300 w-full h-full"></div>
+                              // Placeholder div while image is not visible
+                              <div className="w-full h-full flex items-center justify-center bg-gray-200 animate-pulse">
+                                <span className="text-gray-400 text-xs">Loading Image...</span> {/* Added text to placeholder */}
                               </div>
                             )}
                           </div>
