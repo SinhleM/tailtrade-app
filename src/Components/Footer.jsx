@@ -1,7 +1,10 @@
 import React from 'react';
 import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Footer = ({ scrollToSection }) => {
+  const navigate = useNavigate();
+
   // Fallback in case scrollToSection is not passed
   const handleScroll = (id) => {
     if (typeof scrollToSection === 'function') {
@@ -11,6 +14,10 @@ const Footer = ({ scrollToSection }) => {
       if (el) el.scrollIntoView({ behavior: 'smooth' });
       else console.warn(`Section with id "${id}" not found.`);
     }
+  };
+
+  const handleNavigation = (path) => {
+    navigate(path);
   };
 
   return (
@@ -34,43 +41,43 @@ const Footer = ({ scrollToSection }) => {
                     e.preventDefault();
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
-                  className="text-gray-400 text-sm hover:text-white"
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
                 >
                   Home
                 </a>
               </li>
               <li>
                 <a
-                  href="Mhttp://localhost:5173/Menu"
+                  href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleScroll('listed-pets');
+                    handleNavigation('/menu');
                   }}
-                  className="text-gray-400 text-sm hover:text-white"
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
                 >
                   Browse Pets
                 </a>
               </li>
               <li>
                 <a
-                  href="#footer"
+                  href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleScroll('footer');
+                    handleNavigation('/legalpoliciespage');
                   }}
-                  className="text-gray-400 text-sm hover:text-white"
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
                 >
                   About Us
                 </a>
               </li>
               <li>
                 <a
-                  href="#footer"
+                  href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleScroll('footer');
+                    handleNavigation('/legalpoliciespage');
                   }}
-                  className="text-gray-400 text-sm hover:text-white"
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
                 >
                   Contact
                 </a>
@@ -81,9 +88,42 @@ const Footer = ({ scrollToSection }) => {
           <div>
             <h3 className="text-white font-bold mb-4">Legal</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-gray-400 text-sm hover:text-white">Terms of Service</a></li>
-              <li><a href="#" className="text-gray-400 text-sm hover:text-white">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-400 text-sm hover:text-white">Cookie Policy</a></li>
+              <li>
+                <a 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation('/legalpoliciespage');
+                  }}
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
+                >
+                  Terms of Service
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation('/legalpoliciespage');
+                  }}
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
+                >
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavigation('/legalpoliciespage');
+                  }}
+                  className="text-gray-400 text-sm hover:text-white cursor-pointer"
+                >
+                  Cookie Policy
+                </a>
+              </li>
             </ul>
           </div>
 
