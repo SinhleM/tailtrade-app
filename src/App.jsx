@@ -9,11 +9,13 @@ import CreateListing from './Components/CreateListing.jsx';
 import MessagingPage from './Components/MessagingPage.jsx';
 import ProtectedRoute from './Components/ProtectedRoute.jsx';
 import Dashboard from './Components/Dashboard.jsx';
+import LegalPoliciesPage from './Components/LegalPoliciesPage.jsx';
 import './App.css';
 
 function App() {
   return (
 
+    
       <Router>
         <Routes>
           {/* Public routes */}
@@ -28,6 +30,8 @@ function App() {
             <Route path="/listing/:listingType/:listingId" element={<ListingDetail />} />
             <Route path="/messagingPage" element={<MessagingPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/LegalPoliciesPage" element={<LegalPoliciesPage />} />
+
           </Route>
 
           
