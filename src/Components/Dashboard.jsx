@@ -337,7 +337,7 @@ const Dashboard = () => {
                         {listing.listing_type === 'pet' ? `Pet - ${listing.breed || 'N/A'}` : 'Supply'} {/* */}
                       </span>
                     </td>
-                    <td className="py-2 px-4 border-b">${listing.price ? listing.price.toFixed(2) : 'N/A'}</td> {/* */}
+                    <td className="py-2 px-4 border-b">R{listing.price ? listing.price.toFixed(2) : 'N/A'}</td> {/* */}
                     <td className="py-2 px-4 border-b">{listing.location}</td> {/* */}
                     <td className="py-2 px-4 border-b">{new Date(listing.created_at).toLocaleDateString()}</td> {/* */}
                     <td className="py-2 px-4 border-b text-center">
@@ -500,7 +500,7 @@ const Dashboard = () => {
                         {item.listing_type === 'pet' ? 'Pet' : 'Supply'} {/* */}
                       </span>
                     </td>
-                    <td className="py-2 px-4 border-b">${item.price ? item.price.toFixed(2) : 'N/A'}</td> {/* */}
+                    <td className="py-2 px-4 border-b">R{item.price ? item.price.toFixed(2) : 'N/A'}</td> {/* */}
                     <td className="py-2 px-4 border-b">{item.seller_name}</td> {/* */}
                     <td className="py-2 px-4 border-b">{item.buyer_name || 'Unknown'}</td> {/* */}
                     <td className="py-2 px-4 border-b">{new Date(item.sold_at).toLocaleDateString()}</td> {/* */}
