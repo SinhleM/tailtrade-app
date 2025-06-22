@@ -39,6 +39,7 @@ const Footer = ({ scrollToSection }) => {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
+                    handleNavigation('/'); // Navigate to HomePage
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   className="text-gray-400 text-sm hover:text-white cursor-pointer"
@@ -130,9 +131,9 @@ const Footer = ({ scrollToSection }) => {
           <div>
             <h3 className="text-white font-bold mb-4">Connect with Us</h3>
             <div className="flex space-x-4 mb-4">
-              <a href="#" className="text-gray-400 hover:text-white"><Facebook size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-white"><Instagram size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-white"><Twitter size={20} /></a>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation('/legalpoliciespage'); }} className="text-gray-400 hover:text-white"><Facebook size={20} /></a>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation('/legalpoliciespage'); }} className="text-gray-400 hover:text-white"><Instagram size={20} /></a>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleNavigation('/legalpoliciespage'); }} className="text-gray-400 hover:text-white"><Twitter size={20} /></a>
             </div>
             <p className="text-gray-400 text-sm">Email: info@tailtrade.co.za</p>
             <p className="text-gray-400 text-sm">Phone: +27 83 123 4567</p>
