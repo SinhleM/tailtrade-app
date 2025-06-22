@@ -1,4 +1,3 @@
-
 import { useAuth } from '../AuthContext'; // Assumes AuthContext.jsx is in src/
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +11,7 @@ const LoginRegister = () => {
     name: '',
     email: '',
     password: '',
-    role: 'customer' // Default role for registration
+    role: 'customer' // Default role for registration - always customer
   });
   const [errors, setErrors] = useState({}); // Stores validation errors
   const [isSubmitting, setIsSubmitting] = useState(false); // Tracks submission status to disable button
@@ -71,7 +70,6 @@ const LoginRegister = () => {
 
     const endpoint = isLogin ? 'login.php' : 'register.php';
     // Corrected URL: ensure slash before endpoint
-
 
     const url = `http://localhost/PET-C2C-PROJECT/TailTrade/Backend/${endpoint}`;
 
@@ -132,7 +130,7 @@ const LoginRegister = () => {
       name: '',
       email: '',
       password: '',
-      role: 'customer'
+      role: 'customer' // Always reset to customer role
     });
     setErrors({});
     setSubmitMessage({ type: '', message: '' }); // Clear any previous messages
@@ -245,25 +243,8 @@ const LoginRegister = () => {
              )}
           </div>
 
-          {/* Role Field (only for Registration) */}
-          {!isLogin && (
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role" // name attribute must match state key
-                value={formData.role}
-                onChange={handleChange} // Connects select changes to state
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value="customer">Customer</option>
-                <option value="admin">Admin</option>
-              </select>
-              {/* Add error display for role if needed */}
-            </div>
-          )}
+          {/* Role Field - REMOVED: No longer shown to users during registration */}
+          {/* All new registrations will automatically be set to 'customer' role */}
 
           {/* Submit Button */}
           <div>
@@ -297,4 +278,4 @@ const LoginRegister = () => {
   );
 }; // End of LoginRegister component function
 
-export default LoginRegister; 
+export default LoginRegister;
