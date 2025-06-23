@@ -2,6 +2,7 @@ import { useAuth } from '../AuthContext'; // Assumes AuthContext.jsx is in src/
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import config from '../config'; // Import the config file
 
 // Make sure this component is exported
 const LoginRegister = () => {
@@ -68,17 +69,17 @@ const LoginRegister = () => {
     setIsSubmitting(true); // Disable submit button
     setSubmitMessage({ type: '', message: '' }); // Clear previous messages
 
-    const endpoint = isLogin ? 'login.php' : 'register.php';
-    // Corrected URL: ensure slash before endpoint
-
-    const url = `http://localhost/PET-C2C-PROJECT/TailTrade/Backend/${endpoint}`;
+    const endpoint = isLogin ? config.endpoints.LOGIN : config.endpoints.REGISTER;
+    // Use the config file for the complete URL
+    const url = `${config.API_BASE_URL}/${endpoint}`;
 
     try {
       // Send POST request using Axios
       const response = await axios.post(url, formData, {
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        timeout: 10000 // 10 second timeout
       });
 
       const data = response.data; // Response data from PHP script
@@ -88,9 +89,9 @@ const LoginRegister = () => {
           type: 'success',
           message: isLogin ? 'Login successful!' : 'Registration successful!'
         });
-        // Store user data in localStorage upon successful login/registration [cite: 108]
+        // Store user data in localStorage upon successful login/registration
         localStorage.setItem('user', JSON.stringify(data.user));
-        // Redirect to homepage after a delay [cite: 109]
+        // Redirect to homepage after a delay
         setTimeout(() => {
           navigate('/');
           // Optionally reload to ensure header updates if needed
@@ -106,13 +107,16 @@ const LoginRegister = () => {
     } catch (error) {
       // Handle network errors or errors thrown by Axios/server
       let errorMessage = 'Server error. Please try again later.';
-      if (error.response && error.response.data && error.response.data.message) {
-           errorMessage = error.response.data.message; // Prefer backend error message
+      
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Request timed out. Please check your connection.';
+      } else if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message; // Prefer backend error message
       } else if (error.request) {
-           errorMessage = 'Network error or server did not respond.';
-           console.error('Network Error:', error.request);
+        errorMessage = 'Network error or server did not respond.';
+        console.error('Network Error:', error.request);
       } else {
-           console.error('Axios Setup Error:', error.message);
+        console.error('Axios Setup Error:', error.message);
       }
 
       setSubmitMessage({ type: 'error', message: errorMessage });
@@ -137,7 +141,6 @@ const LoginRegister = () => {
   };
 
   // --- JSX Rendering ---
-  // The return statement MUST be inside the component function scope
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
@@ -163,7 +166,7 @@ const LoginRegister = () => {
         {/* Submission Feedback Message */}
         {submitMessage.message && (
           <div
-            className={`mt-4 p-3 rounded-md text-center ${ // Added text-center
+            className={`mt-4 p-3 rounded-md text-center ${
               submitMessage.type === 'success'
                 ? 'bg-green-100 text-green-700'
                 : 'bg-red-100 text-red-700'
@@ -242,9 +245,6 @@ const LoginRegister = () => {
                <p id="password-error" className="mt-1 text-sm text-red-600">{errors.password}</p>
              )}
           </div>
-
-          {/* Role Field - REMOVED: No longer shown to users during registration */}
-          {/* All new registrations will automatically be set to 'customer' role */}
 
           {/* Submit Button */}
           <div>

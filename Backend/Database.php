@@ -1,6 +1,6 @@
 <?php
 // Ensure CORS headers are set correctly and early
-header("Access-Control-Allow-Origin: *"); // Allows requests from any origin
+header("Access-Control-Allow-Origin: https://tailtrade.netlify.app"); // Your Netlify domain
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
@@ -12,10 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Database Configuration
-$dbHost = 'localhost'; // Usually localhost for XAMPP
-$dbUser = 'root';      // Default XAMPP username
-$dbPass = '';          // Default XAMPP password
-$dbName = 'tailtrade_db'; // Your database name
+$dbHost = 'sql105.infinityfree.com';
+$dbUser = 'if0_39297632';
+$dbPass = 'xpOCiH81gKsynn';
+$dbName = 'if0_39297632_tailtrade_db';
 
 // Create Connection
 $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
@@ -24,7 +24,7 @@ $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
 if ($conn->connect_error) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database Connection Error: ' . $conn->connect_error]);
-    exit(); // Stop script execution if connection fails
+    exit();
 }
 
 // Set character set to utf8mb4 for proper encoding

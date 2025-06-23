@@ -4,7 +4,7 @@ require 'Database.php'; // Includes CORS headers and DB connection
 // Get input data
 $input = json_decode(file_get_contents('php://input'), true);
 
-// Basic validation (add more robust validation as needed)
+// Basic validation
 if (empty($input['name']) || empty($input['email']) || empty($input['password']) || empty($input['role'])) {
     http_response_code(400); // Bad Request
     echo json_encode(['success' => false, 'message' => 'Missing required fields.']);
@@ -14,7 +14,7 @@ if (empty($input['name']) || empty($input['email']) || empty($input['password'])
 $name = $conn->real_escape_string($input['name']);
 $email = $conn->real_escape_string($input['email']);
 $password = $input['password']; // Get raw password
-$role = $conn->real_escape_string($input['role']); // 'customer' or 'admin' [cite: 2]
+$role = $conn->real_escape_string($input['role']); // 'customer' or 'admin'
 
 // --- Password Hashing ---
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -64,7 +64,6 @@ if ($stmtInsert->execute()) {
      if ($stmtFetch === false) {
          // Log error, but registration was technically successful
          error_log('Database prepare error (fetch user after registration): ' . $conn->error);
-         // Still return success but without full user data maybe? Or handle differently.
          echo json_encode(['success' => true, 'message' => 'Registration successful, but failed to fetch user details.', 'user' => ['id' => $userId, 'name' => $name, 'email' => $email, 'role' => $role]]);
      } else {
         $stmtFetch->bind_param("i", $userId);
