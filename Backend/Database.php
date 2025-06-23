@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Database Configuration (rest of your Database.php)
-$dbHost = 'sql105.infinityfree.com';
-$dbUser = 'if0_39297632';
-$dbPass = 'xpOCiH81gKsynn';
-$dbName = 'if0_39297632_tailtrade_db';
+$dbHost = '	fdb1033.awardspace.net';
+$dbUser = '4651466_tailtrade1db';
+$dbPass = 'G7x!rP9zQb';
+$dbName = '4651466_tailtrade1db';
 
 // Create Connection
 $conn = new mysqli($dbHost, $dbUser, $dbPass, $dbName);
