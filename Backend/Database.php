@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 }
 
 // Database Configuration (rest of your Database.php)
-$dbHost = '	fdb1033.awardspace.net';
+$dbHost = 'fdb1033.awardspace.net';
 $dbUser = '4651466_tailtrade1db';
 $dbPass = 'G7x!rP9zQb';
 $dbName = '4651466_tailtrade1db';
