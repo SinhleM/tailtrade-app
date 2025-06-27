@@ -1,17 +1,17 @@
 // src/Components/MessagingPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom'; // useNavigate is already here
+import { useLocation, useNavigate } from 'react-router-dom';
 import MessageList from './MessageList';
 import MessageForm from './MessageForm';
 import { useAuth } from '../AuthContext';
 import { ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline'; // Import an icon for the exit button
-
-// ... (rest of your imports and component code remains the same)
+import config from '../config'; // <--- IMPORT THE CONFIG FILE
+import axios from 'axios'; // <--- IMPORT AXIOS FOR API CALLS
 
 const MessagingPage = () => {
     const location = useLocation();
-    const navigate = useNavigate(); // useNavigate hook
-    const { loggedInUserId, authLoading } = useAuth();
+    const navigate = useNavigate();
+    const { user, authLoading } = useAuth(); // Use 'user' from AuthContext
 
     const recipientIdFromState = location.state?.recipientId;
     const recipientNameFromState = location.state?.recipientName || 'User';
@@ -24,14 +24,13 @@ const MessagingPage = () => {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [error, setError] = useState(null);
 
-    // ... (useEffect for auth, recipientIdFromState logic remains the same)
     useEffect(() => {
         if (!authLoading) {
-            if (loggedInUserId) {
-                setCurrentUserId(loggedInUserId);
+            if (user && user.id) { // Check for user object and its ID
+                setCurrentUserId(user.id);
 
                 if (recipientIdFromState) {
-                    if (loggedInUserId === recipientIdFromState) {
+                    if (user.id === recipientIdFromState) { // Compare with user.id
                         console.warn("MessagingPage: User attempting to message themselves.");
                         setError("You cannot message yourself.");
                         setOtherUserId(null);
@@ -50,10 +49,9 @@ const MessagingPage = () => {
                 navigate("/login", { state: { from: location } });
             }
         }
-    }, [authLoading, loggedInUserId, recipientIdFromState, recipientNameFromState, navigate, location]);
+    }, [authLoading, user, recipientIdFromState, recipientNameFromState, navigate, location]);
 
 
-    // ... (fetchMessages useCallback remains the same)
     const fetchMessages = useCallback(async () => {
         if (!currentUserId || !otherUserId || error === "You cannot message yourself.") {
             if (currentUserId && !otherUserId && !error?.includes("No recipient selected") && error !== "You cannot message yourself.") {
@@ -62,17 +60,12 @@ const MessagingPage = () => {
             return;
         }
         setLoadingMessages(true);
-        // setError(null);
         try {
-            const response = await fetch(`http://localhost/PET-C2C-PROJECT/TailTrade/Backend/get_messages.php?user1_id=${currentUserId}&user2_id=${otherUserId}`);
+            // --- CRITICAL CHANGE HERE: Use config.js for the endpoint URL ---
+            const url = `${config.API_BASE_URL}/${config.endpoints.GET_MESSAGES}?user1_id=${currentUserId}&user2_id=${otherUserId}`;
+            const response = await axios.get(url, { timeout: 10000 }); // Use axios.get
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Server error response (not OK):", response.status, errorText);
-                throw new Error(`Failed to fetch messages. Status: ${response.status}. ${errorText || 'Server error.'}`);
-            }
-
-            const data = await response.json();
+            const data = response.data; // Axios automatically parses JSON
             if (data.success) {
                 setMessages(data.messages);
                 setError(null);
@@ -80,14 +73,23 @@ const MessagingPage = () => {
                 setError(data.message || 'Failed to parse messages from API.');
             }
         } catch (err) {
+            let errorMessage = 'An unknown error occurred while fetching messages. Please check your connection.';
+            if (axios.isAxiosError(err)) {
+                if (err.code === 'ECONNABORTED') {
+                    errorMessage = 'Request timed out while fetching messages.';
+                } else if (err.response) {
+                    errorMessage = err.response.data.message || `Server error: ${err.response.status}`;
+                } else if (err.request) {
+                    errorMessage = 'Network error or server did not respond.';
+                }
+            }
             console.error("Error fetching messages (catch block in fetchMessages):", err);
-            setError(err.message || 'An unknown error occurred while fetching messages. Please check your connection.');
+            setError(errorMessage);
         } finally {
             setLoadingMessages(false);
         }
     }, [currentUserId, otherUserId, error]);
 
-    // ... (useEffect for fetchMessages interval remains the same)
     useEffect(() => {
         if (currentUserId && otherUserId && error !== "You cannot message yourself.") {
             fetchMessages();
@@ -96,45 +98,52 @@ const MessagingPage = () => {
         }
     }, [fetchMessages, currentUserId, otherUserId, error]);
 
-    // ... (handleSendMessage async function remains the same)
     const handleSendMessage = async (messageContent) => {
         if (!currentUserId || !otherUserId || error === "You cannot message yourself.") {
             setError("Cannot send message: User details are not correctly set up or you are trying to message yourself.");
             return;
         }
         try {
-            const response = await fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/send_message.php', {
-                method: 'POST',
+            // --- CRITICAL CHANGE HERE: Use config.js for the endpoint URL ---
+            const url = `${config.API_BASE_URL}/${config.endpoints.SEND_MESSAGE}`;
+            const response = await axios.post(url, { // Use axios.post
+                sender_id: currentUserId,
+                receiver_id: otherUserId,
+                message_content: messageContent,
+            }, {
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sender_id: currentUserId,
-                    receiver_id: otherUserId,
-                    message_content: messageContent,
-                }),
+                timeout: 10000 // Add timeout
             });
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}. Check server logs.` }));
-                throw new Error(errorData.message);
-            }
-            const data = await response.json();
+
+            const data = response.data; // Axios automatically parses JSON
             if (data.success) {
+                // Optimistically add message to UI (optional, but good for UX)
                 setMessages(prevMessages => [...prevMessages, {
-                    id: `temp-${Date.now()}`,
+                    id: data.message_id || `temp-${Date.now()}`, // Use actual ID if returned
                     sender_id: currentUserId,
                     message_content: messageContent,
-                    created_at: new Date().toISOString()
+                    created_at: new Date().toISOString() // Use server's timestamp if available
                 }]);
-                fetchMessages();
+                fetchMessages(); // Re-fetch to get the official message and timestamp
                 setError(null);
             } else {
                 setError(data.message || 'Failed to send message.');
             }
         } catch (err) {
+            let errorMessage = 'An error occurred while sending message.';
+            if (axios.isAxiosError(err)) {
+                if (err.code === 'ECONNABORTED') {
+                    errorMessage = 'Request timed out while sending message.';
+                } else if (err.response) {
+                    errorMessage = err.response.data.message || `Server error: ${err.response.status}`;
+                } else if (err.request) {
+                    errorMessage = 'Network error or server did not respond.';
+                }
+            }
             console.error("Error sending message:", err);
-            setError(err.message);
+            setError(errorMessage);
         }
     };
-
 
     const LoadingSpinner = () => (
         <div className="flex justify-center items-center h-full">
@@ -142,13 +151,10 @@ const MessagingPage = () => {
         </div>
     );
 
-    // Function to handle exiting the chat
     const handleExitChat = () => {
         navigate('/Menu'); // Navigate to homepage or your main listings page
     };
 
-
-    // ... (authLoading, !currentUserId, and other error return statements remain the same)
     if (authLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4">
@@ -208,13 +214,12 @@ const MessagingPage = () => {
         );
     }
 
-
     return (
         <>
             <div className="flex flex-col h-screen bg-gray-100 font-inter antialiased">
                 <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 flex-grow flex flex-col max-h-[calc(100vh-theme(spacing.16))]">
                     <div className="bg-white shadow-xl rounded-lg flex flex-col flex-grow max-w-3xl mx-auto w-full overflow-hidden">
-                        <div className="p-4 border-b border-gray-200 bg-slate-50 sticky top-0 z-10 flex items-center justify-between"> {/* Flex container for title and button */}
+                        <div className="p-4 border-b border-gray-200 bg-slate-50 sticky top-0 z-10 flex items-center justify-between">
                             <h2 className="text-xl font-semibold text-slate-800">
                                 Chat with {otherUserName}
                             </h2>
@@ -227,7 +232,6 @@ const MessagingPage = () => {
                             </button>
                         </div>
 
-                        {/* ... (loading, error, and message list/form rendering remains the same) ... */}
                         {loadingMessages && messages.length === 0 && (
                             <div className="flex-grow flex items-center justify-center">
                                 <LoadingSpinner />
@@ -236,8 +240,8 @@ const MessagingPage = () => {
 
                         {error && error !== "You cannot message yourself." && error !== "Recipient not identified for fetching messages." && !loadingMessages && messages.length === 0 && (
                              <div className="p-4 m-4 bg-red-50 text-red-700 border border-red-200 rounded-md text-center">
-                                <p><strong>Error:</strong> {error}</p>
-                                <p className="text-sm text-gray-600 mt-1">Please try refreshing or check your connection.</p>
+                                 <p><strong>Error:</strong> {error}</p>
+                                 <p className="text-sm text-gray-600 mt-1">Please try refreshing or check your connection.</p>
                              </div>
                         )}
                         
@@ -255,8 +259,8 @@ const MessagingPage = () => {
                         )}
                         {error === "Recipient not identified for fetching messages." && messages.length === 0 && !loadingMessages &&(
                              <div className="flex-grow flex items-center justify-center p-10 text-center text-gray-500">
-                                Select a conversation to view messages.
-                            </div>
+                                 Select a conversation to view messages.
+                             </div>
                         )}
                     </div>
                 </div>

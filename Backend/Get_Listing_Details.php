@@ -3,9 +3,13 @@ require 'Database.php';
 
 $response = ['success' => false, 'listing' => null, 'uploader' => null, 'message' => ''];
 
-// --- DEFINE STATIC BASE URL TO MATCH IMAGE PATH ---
-$imageBaseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://");
-$imageBaseUrl .= $_SERVER['HTTP_HOST'] . '/PET-C2C-PROJECT/TailTrade/Backend/uploads/listing_images/'; // Adjust this path if your project structure is different
+// --- CORRECTED STATIC BASE URL FOR IMAGES ---
+// On AwardSpace, your domain points directly to the directory containing 'uploads'.
+// So, the base URL for images is simply your domain + /uploads/listing_images/
+$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://");
+$domain = $_SERVER['HTTP_HOST'];
+// The correct web-accessible path on AwardSpace is just /uploads/listing_images/
+$imageBaseUrl = $protocol . $domain . '/uploads/listing_images/'; 
 
 $listing_type_raw = isset($_GET['type']) ? $_GET['type'] : null;
 $listing_id_raw = isset($_GET['id']) ? $_GET['id'] : null;
@@ -27,19 +31,17 @@ $listing_id = (int)$listing_id_raw;
 
 try {
     $sql = "";
-    // Ensure owner_id is selected from the primary table (pets or pet_supplies)
-    // to be used as the uploader's ID.
-    $user_fields = "u.name AS uploader_name, u.email AS uploader_email";
+    $user_fields = "u.id AS uploader_id, u.name AS uploader_name, u.email AS uploader_email"; // Added u.id here
 
     if ($listing_type === 'pet') {
         $sql = "SELECT p.id, p.owner_id, p.name, p.type, p.breed, p.age, p.price, p.location, p.description, p.created_at, 
-                       {$user_fields}, 'pet' AS calculated_listing_type
+                         {$user_fields}, 'pet' AS calculated_listing_type, p.status 
                 FROM pets p
                 JOIN users u ON p.owner_id = u.id
                 WHERE p.id = ?";
     } elseif ($listing_type === 'supply') {
         $sql = "SELECT ps.id, ps.owner_id, ps.name, ps.condition, ps.price, ps.location, ps.description, ps.created_at,
-                       {$user_fields}, 'supply' AS calculated_listing_type
+                         {$user_fields}, 'supply' AS calculated_listing_type, ps.status
                 FROM pet_supplies ps
                 JOIN users u ON ps.owner_id = u.id
                 WHERE ps.id = ?";
@@ -69,7 +71,8 @@ try {
             'location' => $data['location'],
             'description' => $data['description'],
             'created_at' => $data['created_at'],
-            'listing_type' => $data['calculated_listing_type'] 
+            'listing_type' => $data['calculated_listing_type'],
+            'status' => $data['status'] ?? 'available' // Default status if not set
         ];
 
         if ($listing_type === 'pet') {
@@ -90,26 +93,25 @@ try {
                 if (!empty($imgRow['image_path'])) {
                     $imagePath = $imgRow['image_path'];
                     
-                    $redundantPathPrefix = 'uploads/listing_images/';
-                    if (strpos($imagePath, $redundantPathPrefix) === 0) {
-                        $imagePath = substr($imagePath, strlen($redundantPathPrefix));
-                    }
-                    $images[] = rtrim($imageBaseUrl, '/') . '/' . ltrim($imagePath, '/');
+                    // Ensure the image path is just the filename or relative from uploads/listing_images/
+                    // Example: if image_path from DB is 'uploads/listing_images/image.jpg'
+                    // We need to remove any leading 'uploads/listing_images/' if it's stored that way,
+                    // and then prepend the correct $imageBaseUrl.
+                    
+                    // This logic attempts to clean the path if it contains the full 'uploads/listing_images/' prefix
+                    $cleanedImagePath = str_replace('uploads/listing_images/', '', $imagePath);
+                    $images[] = $imageBaseUrl . $cleanedImagePath; // <--- CORRECTED IMAGE URL CONSTRUCTION
                 }
             }
             $stmtImg->close();
         }
         $response['listing']['images'] = $images;
 
-        // *** MODIFICATION START ***
-        // Add the uploader's ID (which is the owner_id of the listing) to the uploader object.
-        // The $data['owner_id'] comes from the main query (p.owner_id or ps.owner_id).
         $response['uploader'] = [
-            'id' => (int)$data['owner_id'], // This is the crucial addition
+            'id' => (int)$data['uploader_id'], // Use the uploader_id from the query
             'name' => $data['uploader_name'], 
             'email' => $data['uploader_email']
         ];
-        // *** MODIFICATION END ***
         
         $response['success'] = true;
         $response['message'] = 'Listing details fetched successfully.';

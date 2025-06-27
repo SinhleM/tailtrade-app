@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import config from '../config'; // <--- IMPORT THE CONFIG FILE
+import axios from 'axios'; // <--- IMPORT AXIOS FOR API CALLS
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
@@ -89,15 +91,17 @@ const Profile = () => {
     }
     
     try {
-      const response = await fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/update_profile.php', {
-        method: 'POST',
+      // --- CRITICAL CHANGE HERE: Use config.js for the endpoint URL ---
+      const url = `${config.API_BASE_URL}/${config.endpoints.UPDATE_PROFILE}`;
+      
+      const response = await axios.post(url, updateData, { // Use axios.post
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateData),
+        timeout: 10000 // Add timeout
       });
       
-      const data = await response.json();
+      const data = response.data; // Axios automatically parses JSON
       
       if (data.success) {
         setSubmitMessage({
@@ -126,12 +130,31 @@ const Profile = () => {
           message: data.message || 'An error occurred'
         });
       }
-    } catch (error) {
+    } catch (error) { // Catch axios errors
+      let errorMessage = 'Server error. Please try again later.';
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = 'Request timed out. Please check your connection.';
+        } else if (error.response) {
+          errorMessage = error.response.data.message || `Server error: ${error.response.status}`;
+          console.error('API Error Response:', error.response.data);
+        } else if (error.request) {
+          errorMessage = 'Network error or server did not respond.';
+          console.error('Network Error:', error.request);
+        } else {
+          errorMessage = `Error setting up request: ${error.message}`;
+          console.error('Axios Setup Error:', error.message);
+        }
+      } else {
+        errorMessage = `An unexpected error occurred: ${error.message}`;
+        console.error('Unexpected Error:', error);
+      }
+
       setSubmitMessage({
         type: 'error',
-        message: 'Server error. Please try again later.'
+        message: errorMessage
       });
-      console.error('Error:', error);
     } finally {
       setIsSubmitting(false);
     }

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Heart, User, Menu as MenuIcon, LogOut, LayoutDashboard } from 'lucide-react'; // Added LayoutDashboard icon
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext'; // <--- IMPORT useAuth
 
 // Header component: Manages navigation, user authentication status, and search.
 // - scrollToSection: Function to scroll to specific sections on the homepage.
 const Header = ({ scrollToSection }) => {
   // State for managing the mobile menu's open/closed status.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // State for storing the currently logged-in user's data.
-  const [currentUser, setCurrentUser] = useState(null);
   // State to track if the search input is focused (can be used for UI changes).
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   // State for the search input value.
@@ -16,14 +15,16 @@ const Header = ({ scrollToSection }) => {
 
   // Hook for programmatic navigation.
   const navigate = useNavigate();
+  // Get user and isAuthenticated from AuthContext
+  const { user, isAuthenticated } = useAuth(); // <--- USE user AND isAuthenticated FROM AUTHCONTEXT
 
-  // Effect to check for logged-in user data in localStorage when the component mounts.
-  useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      setCurrentUser(JSON.parse(user));
-    }
-  }, []);
+  // Effect to update currentUser state from AuthContext's user state
+  // This ensures the header reacts to login/logout changes from AuthContext
+  // (though you could directly use 'user' from useAuth instead of 'currentUser' state)
+  // For simplicity, let's directly use 'user' from useAuth where needed.
+  // We don't need a separate `currentUser` state here if `useAuth` provides it.
+  // However, your existing code uses `currentUser`, so we'll map `user` to it.
+  const currentUser = user; // Map AuthContext's 'user' to local 'currentUser' for existing logic
 
   // Toggles the mobile menu open or closed.
   const toggleMenu = () => {
@@ -32,11 +33,22 @@ const Header = ({ scrollToSection }) => {
 
   // Handles user logout.
   const handleLogout = () => {
-    localStorage.removeItem('user'); // Clear user data from localStorage.
-    setCurrentUser(null); // Reset user state.
+    // AuthContext's logout will handle localStorage clearing and state reset
+    // This assumes your AuthContext has a `logout` function
+    if (isAuthenticated) { // Only call logout if actually authenticated
+      // Assuming you have a logout function in AuthContext
+      // If not, you'd need to add it and import it.
+      // For now, we'll simulate it, but ideally, use AuthContext's logout.
+      localStorage.removeItem('user'); // Clear user data from localStorage.
+      // If you have a logout function in AuthContext, call it here:
+      // logout(); // Example: if useAuth provides logout()
+    }
+    // Re-check user state after logout (or rely on AuthContext's effect)
+    // For now, let's just clear local state for immediate UI update
+    // setCurrentUser(null); // No longer needed if relying on AuthContext's `user`
     setIsMenuOpen(false); // Close mobile menu if open.
     navigate('/'); // Navigate to the homepage.
-    // Consider window.location.reload() if header doesn't update immediately across all scenarios.
+    window.location.reload(); // Force reload to ensure full state reset across app
   };
 
   // Handles the search input change.
@@ -60,7 +72,7 @@ const Header = ({ scrollToSection }) => {
     }
   };
 
-  // Check if user is an admin
+  // Check if user is an admin - now directly from AuthContext's user object
   const isAdmin = currentUser && currentUser.role === 'admin';
 
   return (
@@ -166,6 +178,10 @@ const Header = ({ scrollToSection }) => {
                     <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>
                       My Profile
                     </Link>
+                    {/* NEW: Browse Pets & Items link for logged-in users */}
+                    <Link to="/Menu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>
+                      Browse Pets & Items
+                    </Link>
                     <Link to="/list-pet" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>
                       Make a Listing
                     </Link>
@@ -195,6 +211,7 @@ const Header = ({ scrollToSection }) => {
                     <Link to="/login" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>Sign In / Register</Link>
                     <div className="border-t border-gray-100 my-1"></div>
                     <Link to="/" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>Home</Link>
+                    {/* Existing "Browse Pets & Items" for logged-out users */}
                     <Link to="/Menu" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={() => setIsMenuOpen(false)}>Browse Pets & Items</Link>
                     <a href="/#footer" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem" onClick={(e) => { e.preventDefault(); document.getElementById('footer')?.scrollIntoView({ behavior: 'smooth' }); setIsMenuOpen(false); }}>About Us</a>
                   </>
