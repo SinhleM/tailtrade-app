@@ -102,7 +102,7 @@ const Menu = () => {
         const url = `${config.API_BASE_URL}/${config.endpoints.GET_ALL_LISTINGS}`;
         
         // Use axios for consistency and better error handling
-        const response = await axios.get(url, { timeout: 10000 }); // Add timeout for robustness
+        const response = await axios.get(url, { timeout: 30000 }); // Add timeout for robustness
         const data = response.data;
 
         if (data.success) {

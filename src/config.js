@@ -9,35 +9,37 @@ const config = {
   // API endpoints
   endpoints: {
     // Authentication
-    LOGIN: 'Login.php',         // Matches server filename case
-    REGISTER: 'Register.php',   // Matches server filename case
+    LOGIN: 'Login.php',
+    REGISTER: 'Register.php',
 
     // Listings (Get)
     GET_ALL_LISTINGS: 'Get_All_Listings.php',
     GET_LISTING_DETAILS: 'Get_Listing_Details.php',
 
     // Messaging
-    GET_MESSAGES: 'get_messages.php', // Appears lowercase in screenshot
-    SEND_MESSAGE: 'send_message.php', // Appears lowercase in screenshot
+    GET_MESSAGES: 'get_messages.php',
+    SEND_MESSAGE: 'send_message.php',
 
     // User/Profile Management
     UPDATE_PROFILE: 'Update_Profile.php',
-    GET_ALL_USERS: 'Get_All_Users.php',
-    DELETE_USER: 'Delete_User.php',
+
+    // --- ADMIN-RELATED ENDPOINTS (UPDATED PATHS) ---
+    GET_ALL_USERS: 'Admin/Get_All_Users.php', // <--- UPDATED
+    DELETE_USER: 'Admin/Delete_User.php',     // <--- UPDATED
 
     // Listing Management (Create/Update/Delete)
-    LIST_PET: 'List_Pet.php',           // Assuming this is for creating a pet listing
-    LIST_SUPPLIES: 'List_Supplies.php', // Assuming this is for creating a supplies listing
-    DELETE_LISTING: 'Delete_Listing.php',
-    UPDATE_LISTING_STATUS: 'Update_Listing_Status.php',
+    LIST_PET: 'List_Pet.php',
+    LIST_SUPPLIES: 'List_Supplies.php',
+    DELETE_LISTING: 'Admin/Delete_Listing.php',       // <--- UPDATED
+    UPDATE_LISTING_STATUS: 'Admin/Update_Listing_Status.php', // <--- UPDATED
 
     // Admin/Moderation
-    GET_FLAGGED_CONTENT: 'Get_Flagged_Content.php',
-    HANDLE_FLAGGED_CONTENT: 'Handle_Flagged_Content.php',
-    GET_SOLD_ITEMS: 'get_sold_items.php', // Appears lowercase in screenshot
+    GET_FLAGGED_CONTENT: 'Admin/Get_Flagged_Content.php',   // <--- UPDATED
+    HANDLE_FLAGGED_CONTENT: 'Admin/Handle_Flagged_Content.php', // <--- UPDATED
+    GET_SOLD_ITEMS: 'Admin/get_sold_items.php', // <--- UPDATED (assuming this is also in Admin)
 
     // General Test (if you still have it)
-    TEST: 'test.php', // Matches server filename case
+    TEST: 'test.php',
   }
 };
 
