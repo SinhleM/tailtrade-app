@@ -1,4 +1,3 @@
-
 const Hero = () => {
   return (
     <section className="relative bg-gray-100 py-16">
@@ -11,7 +10,8 @@ const Hero = () => {
           </div>
         </div>
         <div className="md:w-1/2 flex justify-center md:justify-end">
-          <img src="./src/placeholder images/hero.jpg.jpg" alt="Dog" className="rounded-lg shadow-lg h-80 object-cover mr-4" />
+          {/* Corrected image source path */}
+          <img src="/placeholder images/hero.jpg.jpg" alt="Dog" className="rounded-lg shadow-lg h-80 object-cover mr-4" />
         </div>
       </div>
     </section>

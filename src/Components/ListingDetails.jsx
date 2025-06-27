@@ -9,12 +9,15 @@ import {
   Flag, CheckCircle2, Send, XCircle, Check
 } from 'lucide-react';
 import { useAuth } from '../AuthContext'; // Adjusted path: Assumes AuthContext.jsx is in src/
+import config from '../config'; // <--- IMPORT THE CONFIG FILE
+import axios from 'axios'; // <--- IMPORT AXIOS FOR API CALLS
 
 const ListingDetail = () => {
     const { listingType, listingId } = useParams();
     const navigate = useNavigate();
-    const { loggedInUserId, authLoading } = useAuth();
-    const apiBaseUrl = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend';
+    const { user, authLoading } = useAuth(); // Use 'user' from AuthContext
+    // Remove the hardcoded apiBaseUrl
+    // const apiBaseUrl = 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend'; // REMOVE THIS LINE
 
     const [listing, setListing] = useState(null);
     const [uploader, setUploader] = useState(null);
@@ -44,18 +47,12 @@ const ListingDetail = () => {
         setReportReason('');
         setShowMarkSoldConfirm(false);
 
-        fetch(`${apiBaseUrl}/Get_Listing_Details.php?type=${listingType}&id=${listingId}`) //
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(errData => {
-                        throw new Error(errData.message || `HTTP error! status: ${response.status}`);
-                    }).catch(() => {
-                        throw new Error(`HTTP error! status: ${response.status}. Malformed response or server error.`);
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
+        const fetchListingDetails = async () => {
+            try {
+                const url = `${config.API_BASE_URL}/${config.endpoints.GET_LISTING_DETAILS}?type=${listingType}&id=${listingId}`;
+                const response = await axios.get(url, { timeout: 10000 }); // Add timeout
+                const data = response.data;
+
                 if (data.success && data.listing) {
                     setListing(data.listing);
                     setUploader(data.uploader);
@@ -63,23 +60,35 @@ const ListingDetail = () => {
                     setError(data.message || 'Could not fetch listing details. The listing may not exist or data is incomplete.');
                     setListing(null);
                 }
-            })
-            .catch(err => {
+            } catch (err) {
+                let errorMessage = `Failed to connect or an error occurred: ${err.message}.`;
+                if (axios.isAxiosError(err)) {
+                    if (err.code === 'ECONNABORTED') {
+                        errorMessage = 'Request timed out while fetching listing details.';
+                    } else if (err.response) {
+                        errorMessage = err.response.data.message || `Server error: ${err.response.status}`;
+                    } else if (err.request) {
+                        errorMessage = 'Network error or server did not respond.';
+                    }
+                }
                 console.error('Error fetching listing details:', err);
-                setError(`Failed to connect or an error occurred: ${err.message}.`);
+                setError(errorMessage);
                 setListing(null);
-            })
-            .finally(() => {
+            } finally {
                 setLoading(false);
-            });
-    }, [listingType, listingId, authLoading, apiBaseUrl]);
+            }
+        };
+
+        fetchListingDetails();
+    }, [listingType, listingId, authLoading]); // Removed apiBaseUrl from dependencies
 
     const handleContactSeller = () => {
         if (authLoading) {
             setActionMessage({text: "Still checking authentication status. Please wait a moment.", type: 'info'});
             return;
         }
-        if (!loggedInUserId) {
+        // Use user.id instead of loggedInUserId
+        if (!user || !user.id) {
             setActionMessage({text: "You need to be logged in to contact a seller. Please log in.", type: 'error'});
             navigate("/login", { state: { from: `/listing/${listingType}/${listingId}` } });
             return;
@@ -88,7 +97,8 @@ const ListingDetail = () => {
             setActionMessage({text: "Seller information is not available or seller ID is missing. Cannot initiate contact.", type: 'error'});
             return;
         }
-        if (uploader.id === loggedInUserId) {
+        // Use user.id instead of loggedInUserId
+        if (uploader.id === user.id) {
             setActionMessage({text: "You cannot message yourself.", type: 'info'});
             return;
         }
@@ -115,7 +125,8 @@ const ListingDetail = () => {
             setActionMessage({ text: 'A reason is required to report this listing.', type: 'error' });
             return;
         }
-        if (!listing || !loggedInUserId) {
+        // Use user.id instead of loggedInUserId
+        if (!listing || !user || !user.id) {
              setActionMessage({ text: 'Cannot submit report: missing data or not logged in.', type: 'error' });
             return;
         }
@@ -123,18 +134,15 @@ const ListingDetail = () => {
         setIsProcessingReport(true);
         setActionMessage({ text: 'Submitting report...', type: 'info' });
         try {
-            const response = await fetch(`${apiBaseUrl}/Admin/Handle_Flagged_Content.php`, { // MODIFIED URL
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ // MODIFIED PAYLOAD
-                    itemId: listing.id,
-                    itemType: listing.listing_type,
-                    reporterId: loggedInUserId,
-                    reason: reportReason.trim(),
-                    action: 'submit_report' // Action for backend to identify the task
-                }),
+            const url = `${config.API_BASE_URL}/${config.endpoints.HANDLE_FLAGGED_CONTENT}`; // Use config
+            const response = await axios.post(url, {
+                itemId: listing.id,
+                itemType: listing.listing_type,
+                reporterId: user.id, // Use user.id
+                reason: reportReason.trim(),
+                action: 'submit_report'
             });
-            const result = await response.json();
+            const result = response.data; // Axios parses JSON automatically
             if (result.success) {
                 setActionMessage({ text: result.message || 'Listing reported successfully. Thank you.', type: 'success' });
                 setShowReportInput(false);
@@ -143,8 +151,12 @@ const ListingDetail = () => {
                 setActionMessage({ text: result.message || 'Failed to report listing.', type: 'error' });
             }
         } catch (err) {
+            let errorMessage = `Error submitting report: ${err.message}`;
+            if (axios.isAxiosError(err) && err.response && err.response.data && err.response.data.message) {
+                errorMessage = err.response.data.message;
+            }
             console.error('Error reporting listing:', err);
-            setActionMessage({ text: `Error submitting report: ${err.message}`, type: 'error' });
+            setActionMessage({ text: errorMessage, type: 'error' });
         } finally {
             setIsProcessingReport(false);
         }
@@ -161,13 +173,15 @@ const ListingDetail = () => {
     };
 
     const handleConfirmMarkAsSold = async () => {
-        if (!listing || !loggedInUserId) {
+        // Use user.id instead of loggedInUserId
+        if (!listing || !user || !user.id) {
             setActionMessage({ text: 'Cannot mark as sold: missing data or not logged in.', type: 'error' });
             return;
         }
 
         // Frontend check to ensure the user owns the listing
-        if (uploader && uploader.id !== loggedInUserId) {
+        // Use user.id instead of loggedInUserId
+        if (uploader && uploader.id !== user.id) {
             setActionMessage({ text: 'You can only mark your own listings as sold.', type: 'error' });
             return;
         }
@@ -175,16 +189,13 @@ const ListingDetail = () => {
         setIsProcessingMarkSold(true);
         setActionMessage({ text: 'Updating status to sold...', type: 'info' });
         try {
-            const response = await fetch(`${apiBaseUrl}/Admin/Update_Listing_Status.php`, { // MODIFIED URL
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ // MODIFIED PAYLOAD
-                    listingId: listing.id,
-                    listingType: listing.listing_type,
-                    status: 'sold'
-                }),
+            const url = `${config.API_BASE_URL}/${config.endpoints.UPDATE_LISTING_STATUS}`; // Use config
+            const response = await axios.post(url, {
+                listingId: listing.id,
+                listingType: listing.listing_type,
+                status: 'sold'
             });
-            const result = await response.json();
+            const result = response.data; // Axios parses JSON automatically
             if (result.success) {
                 setActionMessage({ text: result.message || 'Listing marked as sold successfully!', type: 'success' });
                 setListing(prevListing => ({ ...prevListing, status: 'sold' }));
@@ -193,8 +204,12 @@ const ListingDetail = () => {
                 setActionMessage({ text: result.message || 'Failed to mark listing as sold.', type: 'error' });
             }
         } catch (err) {
+            let errorMessage = `Error updating status: ${err.message}`;
+            if (axios.isAxiosError(err) && err.response && err.response.data && err.response.data.message) {
+                errorMessage = err.response.data.message;
+            }
             console.error('Error marking listing as sold:', err);
-            setActionMessage({ text: `Error updating status: ${err.message}`, type: 'error' });
+            setActionMessage({ text: errorMessage, type: 'error' });
         } finally {
             setIsProcessingMarkSold(false);
         }
@@ -221,6 +236,10 @@ const ListingDetail = () => {
     const scrollToSection = (sectionId) => (event) => {
         event.preventDefault();
     };
+
+    // Use user.id from AuthContext, not loggedInUserId
+    const loggedInUserId = user ? user.id : null;
+
 
     if (loading || authLoading) {
         return (
@@ -275,7 +294,7 @@ const ListingDetail = () => {
         ? listing.images[currentImageIndex]
         : placeholderImage;
 
-    const isOwner = uploader && loggedInUserId && uploader.id === loggedInUserId;
+    const isOwner = uploader && user && uploader.id === user.id; // Use user.id here
     const isSold = listing && listing.status === 'sold';
 
     return (
@@ -335,7 +354,7 @@ const ListingDetail = () => {
                                     </div>
 
                                     <div className="space-y-3">
-                                        {!isSold && !isOwner && loggedInUserId && (
+                                        {!isSold && !isOwner && user && user.id && ( // Use user.id here
                                             <button
                                                 className="w-full px-4 py-2.5 rounded-md text-white font-semibold shadow-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all flex items-center justify-center text-sm"
                                                 style={{ backgroundColor: 'var(--color-primary)' }}
@@ -381,7 +400,7 @@ const ListingDetail = () => {
                                             </div>
                                         )}
 
-                                        {!isOwner && loggedInUserId && !isSold && (
+                                        {!isOwner && user && user.id && !isSold && ( // Use user.id here
                                              <div className="border border-gray-200 rounded-md">
                                                 {!showReportInput ? (
                                                     <button

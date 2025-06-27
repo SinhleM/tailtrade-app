@@ -3,6 +3,8 @@ import { Filter, X, ChevronDown, ChevronUp, AlertTriangle, ShoppingBag, Heart } 
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
+import config from '../config'; // <--- IMPORT THE CONFIG FILE
+import axios from 'axios'; // <--- IMPORT AXIOS FOR CONSISTENCY (you use fetch, but axios is better)
 
 const Menu = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -90,15 +92,19 @@ const Menu = () => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  // --- CRITICAL CHANGE HERE: Fetch listings using axios and config.js ---
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetch('http://localhost/PET-C2C-PROJECT/TailTrade/Backend/Get_All_Listings.php')
-      .then(response => {
-        if (!response.ok) throw new new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
-      })
-      .then(data => {
+    const fetchListings = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        // Construct the URL using API_BASE_URL and the specific endpoint
+        const url = `${config.API_BASE_URL}/${config.endpoints.GET_ALL_LISTINGS}`;
+        
+        // Use axios for consistency and better error handling
+        const response = await axios.get(url, { timeout: 10000 }); // Add timeout for robustness
+        const data = response.data;
+
         if (data.success) {
           const formattedData = data.listings.map(item => ({
             ...item,
@@ -112,15 +118,27 @@ const Menu = () => {
           setError(data.message || 'Failed to fetch listings.');
           setAllListings([]);
         }
-        setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
+        let errorMessage = 'Network error or server issue. Please ensure the backend is running and accessible.';
+        if (err.code === 'ECONNABORTED') {
+          errorMessage = 'Request timed out. Please check your connection.';
+        } else if (err.response && err.response.data && err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.request) {
+          errorMessage = 'No response received from backend.';
+        } else {
+          errorMessage = `Error setting up request: ${err.message}`;
+        }
         console.error('Error fetching listings:', err);
-        setError(`Network error or server issue: ${err.message}. Please ensure the backend is running and accessible.`);
+        setError(errorMessage);
         setAllListings([]);
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    fetchListings(); // Call the async function
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     localStorage.setItem('userFavorites', JSON.stringify(Array.from(favorites)));
@@ -156,7 +174,7 @@ const Menu = () => {
     if (sortBy !== 'newest') params.set('sortBy', sortBy);
     if (priceRange[0] > 0) params.set('minPrice', String(priceRange[0]));
     if (priceRange[1] < 50000) params.set('maxPrice', String(priceRange[1]));
-    if (locationFilter !== 'all') params.set('location', locationFilter);
+    if (locationFilter !== 'all' && listing.location !== locationFilter) params.set('location', locationFilter); // Fix: listing.location should be locationFilter
     if (showFavoritesFilter) params.set('showFavorites', 'true');
 
     setSearchParams(params, { replace: true });

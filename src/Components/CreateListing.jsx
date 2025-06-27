@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from './Header'; // Assuming these exist
 import Footer from './Footer'; // Assuming these exist
+import config from '../config'; // <--- IMPORT THE CONFIG FILE
+import axios from 'axios'; // <--- IMPORT AXIOS FOR API CALLS
 
 const CreateListing = () => {
   const [userData, setUserData] = useState(null);
@@ -125,7 +127,8 @@ const CreateListing = () => {
     setSubmitMessage({ type: '', message: '' });
     
     const submissionData = new FormData();
-    submissionData.append('owner_id', userData.id);
+    // Ensure userData.id is correctly available and passed
+    submissionData.append('owner_id', userData ? userData.id : ''); // Add a check for userData
 
     if (listingType === 'pet') {
       submissionData.append('name', formData.name);
@@ -147,56 +150,25 @@ const CreateListing = () => {
       submissionData.append('images[]', file); 
     });
 
-    const endpoint = listingType === 'pet'
-      ? 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_pet.php'
-      : 'http://localhost/PET-C2C-PROJECT/TailTrade/Backend/list_supplies.php';
+    // --- CRITICAL CHANGE HERE: Use config.js for the endpoint URL ---
+    const endpointPath = listingType === 'pet'
+      ? config.endpoints.LIST_PET // Use endpoint from config
+      : config.endpoints.LIST_SUPPLIES; // Use endpoint from config
       
+    const url = `${config.API_BASE_URL}/${endpointPath}`; // Construct full URL
+
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        body: submissionData,
+      // Using axios.post for FormData is generally more robust than fetch
+      const response = await axios.post(url, submissionData, {
+        headers: {
+          // Axios automatically sets Content-Type for FormData, so you don't need 'multipart/form-data' explicitly here
+          // 'Content-Type': 'multipart/form-data', // Remove this line if using axios
+        },
+        timeout: 20000 // Increased timeout for file uploads
       });
       
-      const responseText = await response.text(); // Get raw text first
+      const data = response.data; // Axios automatically parses JSON
 
-      if (!response.ok) {
-        // Server returned an error status (e.g., 400, 404, 500)
-        console.error(`Server error ${response.status}: ${response.statusText}`);
-        console.error("Raw server response:", responseText);
-        let errorMessage = `Server error: ${response.status}.`;
-        try {
-            // Attempt to parse the responseText as JSON, as our PHP script might send JSON errors
-            const errorData = JSON.parse(responseText);
-            if (errorData && errorData.message) {
-                errorMessage = errorData.message;
-            } else {
-                 errorMessage = `Server error ${response.status}: ${responseText.substring(0, 100)}...`; // Show snippet if not JSON
-            }
-        } catch (e) {
-            // If parsing fails, it means the error response was not JSON (e.g., HTML error page)
-            errorMessage = `Server returned non-JSON error. Status: ${response.status}. Check console for raw response.`;
-        }
-        setSubmitMessage({ type: 'error', message: errorMessage });
-        setIsSubmitting(false); // Ensure submission state is reset
-        return; // Stop further processing
-      }
-
-      // If response.ok is true, try to parse the text as JSON
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        console.error('Raw response text for successful (2xx) response:', responseText);
-        setSubmitMessage({
-          type: 'error',
-          message: 'Received malformed data from server despite a success status. Please try again.'
-        });
-        setIsSubmitting(false); // Ensure submission state is reset
-        return; // Stop further processing
-      }
-      
-      // Proceed with data if parsing was successful
       if (data.success) {
         setSubmitMessage({
           type: 'success',
@@ -218,12 +190,33 @@ const CreateListing = () => {
           message: data.message || 'An unspecified error occurred on the server.'
         });
       }
-    } catch (networkError) { // Catches network errors (e.g., server down, DNS issues)
-      setSubmitMessage({
-        type: 'error',
-        message: 'Network issue or server unreachable. Please check your connection and try again.'
-      });
-      console.error('Network error submitting form:', networkError);
+    } catch (error) { // Catch axios errors
+      let errorMessage = 'Server error. Please try again later.';
+      
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          errorMessage = 'Request timed out. Please check your connection.';
+        } else if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          errorMessage = error.response.data.message || `Server error: ${error.response.status}`;
+          console.error('API Error Response:', error.response.data);
+        } else if (error.request) {
+          // The request was made but no response was received
+          errorMessage = 'Network error or server did not respond.';
+          console.error('Network Error:', error.request);
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          errorMessage = `Error setting up request: ${error.message}`;
+          console.error('Axios Setup Error:', error.message);
+        }
+      } else {
+        // Non-Axios errors
+        errorMessage = `An unexpected error occurred: ${error.message}`;
+        console.error('Unexpected Error:', error);
+      }
+
+      setSubmitMessage({ type: 'error', message: errorMessage });
     } finally {
       setIsSubmitting(false);
     }
