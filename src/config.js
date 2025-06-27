@@ -8,8 +8,8 @@ const config = {
   
   // API endpoints
   endpoints: {
-    LOGIN: 'login.php',
-    REGISTER: 'register.php',
+    LOGIN: 'Login.php',
+    REGISTER: 'Register.php',
     // Add other endpoints as needed
   }
 };
