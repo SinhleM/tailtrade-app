@@ -1,50 +1,62 @@
-// src/contexts/AuthContext.jsx
+// src/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [loggedInUserId, setLoggedInUserId] = useState(null);
-    const [authLoading, setAuthLoading] = useState(true); // To handle initial check
-    const [isAuthenticated, setIsAuthenticated] = useState(false); // Add explicit authenticated state
+    // Change loggedInUserId to a full user object state
+    const [user, setUser] = useState(null);
+    const [authLoading, setAuthLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     // Check for authenticated user on initial load
     useEffect(() => {
         const checkAuthStatus = () => {
-            const storedUserId = localStorage.getItem('loggedInUserId');
-            if (storedUserId) {
-                setLoggedInUserId(parseInt(storedUserId, 10));
-                setIsAuthenticated(true);
+            const storedUser = localStorage.getItem('user'); // Look for 'user' object
+            if (storedUser) {
+                try {
+                    const parsedUser = JSON.parse(storedUser);
+                    setUser(parsedUser);
+                    setIsAuthenticated(true);
+                } catch (e) {
+                    console.error("Failed to parse stored user data:", e);
+                    // Clear invalid data
+                    localStorage.removeItem('user');
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
             } else {
-                setLoggedInUserId(null);
+                setUser(null);
                 setIsAuthenticated(false);
             }
             setAuthLoading(false);
         };
         
         checkAuthStatus();
-    }, []);
+    }, []); // Empty dependency array means this runs once on mount
 
-    const login = (userId) => {
-        setLoggedInUserId(userId);
+    // Login function now accepts the full user data object
+    const login = (userData) => {
+        setUser(userData);
         setIsAuthenticated(true);
-        localStorage.setItem('loggedInUserId', userId.toString());
+        localStorage.setItem('user', JSON.stringify(userData)); // Store full user object
     };
 
     const logout = () => {
-        setLoggedInUserId(null);
+        setUser(null);
         setIsAuthenticated(false);
-        localStorage.removeItem('loggedInUserId');
-        localStorage.removeItem('fullUser'); // Also clear the full user data
+        localStorage.removeItem('user'); // Clear the 'user' object
+        // If you store other user-related items, clear them here too
+        // localStorage.removeItem('someOtherUserSpecificItem');
     };
 
     return (
         <AuthContext.Provider value={{ 
-            loggedInUserId, 
+            user, // Export the full user object
             login, 
             logout, 
             authLoading,
-            isAuthenticated // Explicitly export authentication state
+            isAuthenticated
         }}>
             {children}
         </AuthContext.Provider>
