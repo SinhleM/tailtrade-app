@@ -1,12 +1,12 @@
 <?php
-require 'Database.php'; // Includes CORS headers and DB connection
+require 'Database.php'; 
 
 // Get input data
 $input = json_decode(file_get_contents('php://input'), true);
 
 // Basic validation
 if (empty($input['email']) || empty($input['password'])) {
-    http_response_code(400); // Bad Request
+    http_response_code(400); 
     echo json_encode(['success' => false, 'message' => 'Email and password are required.']);
     exit();
 }
@@ -14,8 +14,7 @@ if (empty($input['email']) || empty($input['password'])) {
 $email = $conn->real_escape_string($input['email']);
 $password = $input['password']; // Raw password input
 
-// --- Find User by Email ---
-// Select the hashed password along with other details
+// Find User by Email
 $stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
 if ($stmt === false) {
      http_response_code(500);

@@ -1,5 +1,5 @@
 import { useAuth } from '../AuthContext'; // Assumes AuthContext.jsx is in src/
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import config from '../config'; // Import the config file
@@ -17,10 +17,80 @@ const LoginRegister = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState({ type: '', message: '' });
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: [],
+    isValid: false
+  });
+  const [showPasswordStrength, setShowPasswordStrength] = useState(false);
   const navigate = useNavigate();
 
   // Get the login function from AuthContext
-  const { login } = useAuth(); // <--- ADD THIS LINE
+  const { login } = useAuth();
+
+  // --- Password Strength Validation ---
+  const validatePasswordStrength = (password) => {
+    const feedback = [];
+    let score = 0;
+
+    // Check length
+    if (password.length >= 8) {
+      score += 1;
+    } else {
+      feedback.push('At least 8 characters');
+    }
+
+    // Check for uppercase letter
+    if (/[A-Z]/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('One uppercase letter');
+    }
+
+    // Check for lowercase letter
+    if (/[a-z]/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('One lowercase letter');
+    }
+
+    // Check for number
+    if (/\d/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('One number');
+    }
+
+    // Check for special character
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      score += 1;
+    } else {
+      feedback.push('One special character (!@#$%^&*...)');
+    }
+
+    // Check maximum length
+    if (password.length > 16) {
+      feedback.push('Maximum 16 characters');
+      score = Math.max(0, score - 1);
+    }
+
+    return {
+      score,
+      feedback,
+      isValid: score >= 4 && password.length <= 16
+    };
+  };
+
+  // Update password strength when password changes
+  useEffect(() => {
+    if (!isLogin && formData.password) {
+      const strength = validatePasswordStrength(formData.password);
+      setPasswordStrength(strength);
+      setShowPasswordStrength(true);
+    } else {
+      setShowPasswordStrength(false);
+    }
+  }, [formData.password, isLogin]);
 
   // --- Form Validation ---
   const validateForm = () => {
@@ -36,8 +106,17 @@ const LoginRegister = () => {
     // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8 || formData.password.length > 16) {
-      newErrors.password = 'Password must be between 8 and 16 characters';
+    } else if (isLogin) {
+      // For login, just check basic length requirements
+      if (formData.password.length < 8 || formData.password.length > 16) {
+        newErrors.password = 'Password must be between 8 and 16 characters';
+      }
+    } else {
+      // For registration, use strength validation
+      const strength = validatePasswordStrength(formData.password);
+      if (!strength.isValid) {
+        newErrors.password = 'Password does not meet strength requirements';
+      }
     }
 
     // For registration, validate name
@@ -136,9 +215,80 @@ const LoginRegister = () => {
     });
     setErrors({});
     setSubmitMessage({ type: '', message: '' });
+    setPasswordStrength({ score: 0, feedback: [], isValid: false });
+    setShowPasswordStrength(false);
   };
 
-  // --- JSX Rendering ---
+  // --- Password Strength Indicator Component ---
+  const PasswordStrengthIndicator = () => {
+    const getStrengthText = (score) => {
+      if (score <= 1) return 'Very Weak';
+      if (score <= 2) return 'Weak';
+      if (score <= 3) return 'Fair';
+      if (score <= 4) return 'Good';
+      return 'Strong';
+    };
+
+    const getStrengthColor = (score) => {
+      if (score <= 1) return 'bg-red-500';
+      if (score <= 2) return 'bg-orange-500';
+      if (score <= 3) return 'bg-yellow-500';
+      if (score <= 4) return 'bg-blue-500';
+      return 'bg-green-500';
+    };
+
+    const getStrengthTextColor = (score) => {
+      if (score <= 1) return 'text-red-600';
+      if (score <= 2) return 'text-orange-600';
+      if (score <= 3) return 'text-yellow-600';
+      if (score <= 4) return 'text-blue-600';
+      return 'text-green-600';
+    };
+
+    return (
+      <div className="mt-2">
+        {/* Strength Bar */}
+        <div className="flex space-x-1 mb-2">
+          {[1, 2, 3, 4, 5].map((level) => (
+            <div
+              key={level}
+              className={`h-2 flex-1 rounded ${
+                level <= passwordStrength.score
+                  ? getStrengthColor(passwordStrength.score)
+                  : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+        
+        {/* Strength Text */}
+        <div className="flex justify-between items-center mb-2">
+          <span className={`text-sm font-medium ${getStrengthTextColor(passwordStrength.score)}`}>
+            {getStrengthText(passwordStrength.score)}
+          </span>
+          {passwordStrength.isValid && (
+            <span className="text-green-600 text-sm">✓ Valid</span>
+          )}
+        </div>
+
+        {/* Requirements List */}
+        {passwordStrength.feedback.length > 0 && (
+          <div className="text-sm text-gray-600">
+            <p className="font-medium mb-1">Password must include:</p>
+            <ul className="space-y-1">
+              {passwordStrength.feedback.map((requirement, index) => (
+                <li key={index} className="flex items-center">
+                  <span className="text-red-500 mr-2">•</span>
+                  {requirement}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
@@ -239,9 +389,14 @@ const LoginRegister = () => {
               aria-invalid={errors.password ? "true" : "false"}
               aria-describedby={errors.password ? "password-error" : undefined}
             />
-             {errors.password && (
-               <p id="password-error" className="mt-1 text-sm text-red-600">{errors.password}</p>
-             )}
+            {errors.password && (
+              <p id="password-error" className="mt-1 text-sm text-red-600">{errors.password}</p>
+            )}
+            
+            {/* Password Strength Indicator (only show during registration) */}
+            {showPasswordStrength && !isLogin && (
+              <PasswordStrengthIndicator />
+            )}
           </div>
 
           {/* Submit Button */}
