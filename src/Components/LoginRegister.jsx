@@ -158,7 +158,7 @@ const LoginRegister = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        timeout: 10000
+        timeout: 60000 
       });
 
       const data = response.data;
@@ -168,7 +168,7 @@ const LoginRegister = () => {
           type: 'success',
           message: isLogin ? 'Login successful!' : 'Registration successful!'
         });
-        
+
         // Store user data in localStorage AND update AuthContext state immediately
         localStorage.setItem('user', JSON.stringify(data.user)); // Ensure this matches AuthContext's expectation
         login(data.user); // <--- CALL THE LOGIN FUNCTION FROM AUTHCONTEXT HERE
@@ -185,7 +185,7 @@ const LoginRegister = () => {
       }
     } catch (error) {
       let errorMessage = 'Server error. Please try again later.';
-      
+
       if (error.code === 'ECONNABORTED') {
         errorMessage = 'Request timed out. Please check your connection.';
       } else if (error.response && error.response.data && error.response.data.message) {
@@ -260,7 +260,7 @@ const LoginRegister = () => {
             />
           ))}
         </div>
-        
+
         {/* Strength Text */}
         <div className="flex justify-between items-center mb-2">
           <span className={`text-sm font-medium ${getStrengthTextColor(passwordStrength.score)}`}>
@@ -392,7 +392,7 @@ const LoginRegister = () => {
             {errors.password && (
               <p id="password-error" className="mt-1 text-sm text-red-600">{errors.password}</p>
             )}
-            
+
             {/* Password Strength Indicator (only show during registration) */}
             {showPasswordStrength && !isLogin && (
               <PasswordStrengthIndicator />

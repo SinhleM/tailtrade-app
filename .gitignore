@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Sensitive database file
+/TailTrade/Backend/Database.php
