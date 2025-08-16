@@ -43,5 +43,5 @@
 </p>
 
 <p>
-    Check out the project in my <a href="https://sinhle-portfolio.netlify.app" target="_blank">Portfolio</a>
+    Check out the project in my <a href="https://sinhle-portfolio.vercel.app" target="_blank">Portfolio</a>
 </p>
